@@ -244,6 +244,8 @@ let recipe: recipe_t = {
 }
 
 // issue
+// - [x] 2024_08_23_010728
+//   - actual: rage and completion endings conflict
 // - [x] 2024_08_21_183202
 //   - actual: skill trader trades wrong skill
 // - [x] 2024_08_21_183130
@@ -253,12 +255,13 @@ let recipe: recipe_t = {
 // - [ ] 2024_08_20_223536
 //   - actual: giant confection moves in wrong direction
 // todo
-// nerf skills
+// [ ] consider: nerf skills
 // [x] jump the shark
 //     [x] turn companion into shark
-// find the k-pop hater
-//     turn companion into k-pop stan
-// redesign Magic Mart tilemap
+// [ ] jump the shark failure-to-enter message
+// [ ] find the k-pop hater
+//     [ ] turn companion into k-pop stan
+// [ ] redesign Magic Mart tilemap
 // [x] police arrests
 //     [x] lag police
 //     [x] assault and battery for using feces in recipe
@@ -266,10 +269,11 @@ let recipe: recipe_t = {
 // [x] wiseman
 //     [x] stylize model
 //     [x] make the advice system fair
-// add a way to force the eat-starting-tile sequence
+// [ ] add a way to force the eat-starting-tile sequence
 // [x] add a second bus stop
 // [x] furnish the humble home
 // [x] toilet
+// [ ] redesign toilet
 // [X] kitchen minigame
 // [X] wandering customers
 // upgrades
@@ -385,7 +389,7 @@ function jail(col: number, row: number) {
         [20000, () => {
             jail.sayText("Look. You're softlocked. Okay?")
         }],
-        [1000, () => {
+        [2000, () => {
             jail.sayText("You're not getting your game back.", 10000, false)
         }],
         [20000, () => {
@@ -445,6 +449,69 @@ function shopAdvice(sprite: Sprite) {
         }
     })
 }
+function hitFood(sprite: Sprite) {
+    const status = statusbars.getStatusBarAttachedTo(
+        StatusBarKind.Health,
+        sprite,
+    )
+
+    if (status) {
+        status.value--
+    } else {
+        sprites.destroy(sprite, effects.disintegrate, 500)
+    }
+}
+function makePurchase(customer: Sprite, confection: Sprite, removeCustomer: boolean) {
+    const drop: Sprite = Math.percentChance(1)
+        ? sprites.create(assets.image`hater-ade`, SpriteKind.MagicGrease)
+        : (hasLuck && Math.percentChance(5)
+            ? sprites.create(assets.image`extraLife`, SpriteKind.ExtraLife)
+            : (busCardsActive && !hasBusCard && Math.percentChance(5)
+                ? sprites.create(assets.image`busCard`, SpriteKind.TransitCard)
+                : sprites.create(assets.image`money`, SpriteKind.Goal)
+            )
+        )
+
+    tiles.placeOnTile(drop, customer.tilemapLocation())
+
+    if (recipe.poisoned) {
+        freeze()
+        sprites.destroyAllSpritesOfKind(SpriteKind.Food)
+        sprites.destroyAllSpritesOfKind(SpriteKind.Goal)
+        pet.destroy()
+        customer.sayText("!")
+        music.play(music.melodyPlayable(music.baDing), music.PlaybackMode.InBackground)
+
+        time_sequence([
+            [2000, () => {
+                music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground);
+                customer.destroy(effects.disintegrate, 500);
+            }],
+            [3000, () => {
+                voluntold.sayText("Uh oh.", 500, false)
+            }],
+            [2000, () => {
+                startSequenceArrestAndSoftlock()
+            }],
+        ])
+    }
+
+    if (removeCustomer) {
+        sprites.destroy(customer)
+
+        if (respawnShoppers) {
+            setWindowShoppers(1, sprites.dungeon.doorOpenNorth)
+        }
+    }
+
+    music.play(music.melodyPlayable(music.magicWand), music.PlaybackMode.InBackground)
+
+    if (giantCookiePowerup) {
+        return
+    }
+
+    hitFood(confection)
+}
 function hasTooMuchGilding(cart: number[]): boolean {
     return cart[Magic.GILDING]
         * ingredience[Magic.GILDING].price
@@ -489,7 +556,7 @@ function startTooMuchGildingSequence() {
     }
 
     for (let i = 1; i < 10; ++i) {
-        scene.cameraShake(i * 2, i < 5 ? 500: 750)
+        scene.cameraShake(i * 2, i < 5 ? 500: 750 + 50 * i)
         music.play(music.melodyPlayable(music.bigCrash), music.PlaybackMode.InBackground)
         pause(1000)
     }
@@ -2836,7 +2903,6 @@ class JumpGame {
                 JumpGame.Dark,
             )
 
-            sprite.setScale(2)
             sprite.setFlag(SpriteFlag.GhostThroughWalls, true)
 
             tiles.placeOnTile(
@@ -2985,6 +3051,7 @@ class JumpGame {
         info.setScore(JumpGame.prevScore)
         info.setLife(JumpGame.prevLife)
 
+        info.stopCountdown()
         JumpGame.stopIntervals()
         JumpGame.resetButtonHandlers()
         JumpGame.destroyAllSprites()
@@ -4844,8 +4911,6 @@ function enterMart() {
 
                 countdownType = 0
                 info.startCountdown(10)
-
-                // issue: a bug
                 const awUgonDehhUgonGitKiww = sprites.create(assets.image`vTanRageFace`, SpriteKind.Dark)
                 awUgonDehhUgonGitKiww.setFlag(SpriteFlag.GhostThroughWalls, true)
                 awUgonDehhUgonGitKiww.setScale(2)
@@ -4975,6 +5040,7 @@ function trySetPet() {
     }
 
     let image: Image = assets.image`luckyCat`
+    let anim: Image[] = []
 
     // link: crown pixel art
     // - url
@@ -4986,39 +5052,44 @@ function trySetPet() {
     //   - <https://www.freepik.com/premium-vector/pixel-art-king-crown-icon-bit-game_11812813.htm>
     // - retrieved: 2024_08_23
 
+    // todo c
     switch (companionType) {
-    case Companion.LUCKY_CAT:
-        image = assets.image`luckyCat`
-        break
-    case Companion.KING_SHARK:
-        image = assets.image`kingShark`
-        break
-    case Companion.KPOP_STAN:
-        image = img`
-            . f f f . f f f f . f f f .
-            f f f f f c c c c f f f f f
-            f f f f b c c c c b f f f f
-            f f f c 3 c c c c 3 c f f f
-            . f 3 3 c c c c c c 3 3 f .
-            . f c c c c 4 4 c c c c f .
-            . f f c c 4 4 4 4 c c f f .
-            . f f f b f 4 4 f b f f f .
-            . f f 4 1 f d d f 1 4 f f .
-            . . f f d d d d d d f f . .
-            . . e f e 4 4 4 4 e f e . .
-            . e 4 f b 3 3 3 3 b f 4 e .
-            . 4 d f 3 3 3 3 3 3 c d 4 .
-            . 4 4 f 6 6 6 6 6 6 f 4 4 .
-            . . . . f f f f f f . . . .
-            . . . . f f . . f f . . . .
-        `
-        break
-    default:
-        image = assets.image`luckyCat`
-        break
+        case Companion.LUCKY_CAT:
+            image = assets.image`luckyCat`
+            anim = assets.animation`luckyCatJump`
+            break
+        case Companion.KING_SHARK:
+            image = assets.image`kingShark`
+            anim = assets.animation`kingSharkJump`
+            break
+        case Companion.KPOP_STAN:
+            image = img`
+                . f f f . f f f f . f f f .
+                f f f f f c c c c f f f f f
+                f f f f b c c c c b f f f f
+                f f f c 3 c c c c 3 c f f f
+                . f 3 3 c c c c c c 3 3 f .
+                . f c c c c 4 4 c c c c f .
+                . f f c c 4 4 4 4 c c f f .
+                . f f f b f 4 4 f b f f f .
+                . f f 4 1 f d d f 1 4 f f .
+                . . f f d d d d d d f f . .
+                . . e f e 4 4 4 4 e f e . .
+                . e 4 f b 3 3 3 3 b f 4 e .
+                . 4 d f 3 3 3 3 3 3 c d 4 .
+                . 4 4 f 6 6 6 6 6 6 f 4 4 .
+                . . . . f f f f f f . . . .
+                . . . . f f . . f f . . . .
+            `
+            break
+        default:
+            image = assets.image`luckyCat`
+            break
     }
 
     pet = sprites.create(image, SpriteKind.Companion)
+    animation.runImageAnimation(pet, anim, 50, true)
+
     pet.setFlag(SpriteFlag.GhostThroughTiles, true)
     pet.setFlag(SpriteFlag.GhostThroughWalls, true)
     tiles.placeOnTile(
@@ -5028,27 +5099,6 @@ function trySetPet() {
             voluntold.tilemapLocation().row + (randint(0, 1) * 2 - 1)
         )
     )
-
-    switch (companionType) {
-    case Companion.LUCKY_CAT:
-        animation.runImageAnimation(
-            pet,
-            assets.animation`luckyCatJump`,
-            50,
-            true
-        )
-
-        break
-    case Companion.KING_SHARK:
-        animation.runImageAnimation(
-            pet,
-            assets.animation`kingSharkJump`,
-            50,
-            true
-        )
-
-        break
-    }
 }
 function newExit(col: number, row: number) {
     const exitKind = SpriteKind.create()
@@ -8268,76 +8318,76 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Managerial, function (sprite, ot
         const item = ingredience[index]
 
         switch (index) {
-        case Magic.BEETROOT: 
-            sayLongText("Is that beetroot?", otherSprite.image)
-            sayLongText("You want beetroot!?", otherSprite.image)
-            sayLongText("What are you gonna do with a beetroot?", otherSprite.image)
+            case Magic.BEETROOT: 
+                sayLongText("Is that beetroot?", otherSprite.image)
+                sayLongText("You want beetroot!?", otherSprite.image)
+                sayLongText("What are you gonna do with a beetroot?", otherSprite.image)
 
-            if (game.ask("Add beetroot?")) {
+                if (game.ask("Add beetroot?")) {
+                    balance = addToTotal(index, balance)
+                }
+                else {
+                    sayLongText("\"No\" to the beetroot.", otherSprite.image)
+                }
+
+                break
+            case Magic.FECES:
+                if (hasFoundTheFeces) {
+                    sayLongText("Magic feces. Why? Why again?", otherSprite.image)
+                }
+                else {
+                    hasFoundTheFeces = true
+                    sayLongText("Magic, feces!? Why would you even want this?", otherSprite.image)
+                    sayLongText("Why is it in our store?", otherSprite.image)
+                    meSayLongText("Something tells me I'll know when the time is right.")
+                }
+
+                if (game.ask("Add magic feces?")) {
+                    sayLongText("Ugh.", otherSprite.image)
+                    balance = addToTotal(index, balance)
+                }
+                else {
+                    sayLongText("\"No\" to the feces.", otherSprite.image)
+                }
+
+                break
+            case Magic.DMCA_TAKEDOWN_NOTICE:
+                sayLongText("A magic DMCA takedown notice?", otherSprite.image)
+                sayLongText("\"Free of charge?\"", otherSprite.image)
+                sayLongText("Who gave this to you?", otherSprite.image)
+                sayLongText("Are you being served?", otherSprite.image)
+
+                if (game.ask("Cease and desist.")) {
+                    sayLongText("Hope that works out for you.", otherSprite.image)
+                    music.stopAllSounds()
+                    music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.InBackground)
+                    hasAcceptedCharge = true
+                }
+                else {
+                    sayLongText("Rebuff and counter. Well okay then.", otherSprite.image)
+                }
+
+                break
+            case Magic.MISSINGNO:
+                sayLongText(`One magic\n${item.prettyname}`, otherSprite.image)
+                sayLongText("Once purchased, has the effect of maxing out the sixth item of your inventory,", otherSprite.image)
+                sayLongText("which is:\nmagic gilding.", otherSprite.image)
+
+                if (game.ask("Convert cash to gold?")) {
+                    music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.InBackground)
+                    cart[Magic.GILDING] = 255
+                    balance += 400000
+                    showCartRow(ingredience[index].prettyname, cart[index], ingredience[index].price)
+                    otherSprite.setImage(assets.image`managerGlitched`)
+                }
+                else {
+                    sayLongText("Well okay then.", otherSprite.image)
+                }
+
+                break
+            default:
                 balance = addToTotal(index, balance)
-            }
-            else {
-                sayLongText("\"No\" to the beetroot.", otherSprite.image)
-            }
-
-            break
-        case Magic.FECES:
-            if (hasFoundTheFeces) {
-                sayLongText("Magic feces. Why? Why again?", otherSprite.image)
-            }
-            else {
-                hasFoundTheFeces = true
-                sayLongText("Magic, feces!? Why would you even want this?", otherSprite.image)
-                sayLongText("Why is it in our store?", otherSprite.image)
-                meSayLongText("Something tells me I'll know when the time is right.")
-            }
-
-            if (game.ask("Add magic feces?")) {
-                sayLongText("Ugh.", otherSprite.image)
-                balance = addToTotal(index, balance)
-            }
-            else {
-                sayLongText("\"No\" to the feces.", otherSprite.image)
-            }
-
-            break
-        case Magic.DMCA_TAKEDOWN_NOTICE:
-            sayLongText("A magic DMCA takedown notice?", otherSprite.image)
-            sayLongText("\"Free of charge?\"", otherSprite.image)
-            sayLongText("Who gave this to you?", otherSprite.image)
-            sayLongText("Are you being served?", otherSprite.image)
-
-            if (game.ask("Cease and desist.")) {
-                sayLongText("Hope that works out for you.", otherSprite.image)
-                music.stopAllSounds()
-                music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.InBackground)
-                hasAcceptedCharge = true
-            }
-            else {
-                sayLongText("Rebuff and counter. Well okay then.", otherSprite.image)
-            }
-
-            break
-        case Magic.MISSINGNO:
-            sayLongText(`One magic\n${item.prettyname}`, otherSprite.image)
-            sayLongText("Once purchased, has the effect of maxing out the sixth item of your inventory,", otherSprite.image)
-            sayLongText("which is:\nmagic gilding.", otherSprite.image)
-
-            if (game.ask("Convert cash to gold?")) {
-                music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.InBackground)
-                cart[Magic.GILDING] = 255
-                balance += 400000
-                showCartRow(ingredience[index].prettyname, cart[index], ingredience[index].price)
-                otherSprite.setImage(assets.image`managerGlitched`)
-            }
-            else {
-                sayLongText("Well okay then.", otherSprite.image)
-            }
-
-            break
-        default:
-            balance = addToTotal(index, balance)
-            break
+                break
         }
     }
 
@@ -8625,72 +8675,6 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Unlocking, function (sprite, oth
         sayLongText("doors lol", assets.image`key`)
     })
 })
-
-function hitFood(sprite: Sprite) {
-    const status = statusbars.getStatusBarAttachedTo(
-        StatusBarKind.Health,
-        sprite,
-    )
-
-    if (status) {
-        status.value--
-    } else {
-        sprites.destroy(sprite, effects.disintegrate, 500)
-    }
-}
-
-function makePurchase(customer: Sprite, confection: Sprite, removeCustomer: boolean) {
-    const drop: Sprite = Math.percentChance(1)
-        ? sprites.create(assets.image`hater-ade`, SpriteKind.MagicGrease)
-        : (hasLuck && Math.percentChance(5)
-            ? sprites.create(assets.image`extraLife`, SpriteKind.ExtraLife)
-            : (busCardsActive && !hasBusCard && Math.percentChance(5)
-                ? sprites.create(assets.image`busCard`, SpriteKind.TransitCard)
-                : sprites.create(assets.image`money`, SpriteKind.Goal)
-            )
-        )
-
-    tiles.placeOnTile(drop, customer.tilemapLocation())
-
-    if (recipe.poisoned) {
-        freeze()
-        sprites.destroyAllSpritesOfKind(SpriteKind.Food)
-        sprites.destroyAllSpritesOfKind(SpriteKind.Goal)
-        pet.destroy()
-        customer.sayText("!")
-        music.play(music.melodyPlayable(music.baDing), music.PlaybackMode.InBackground)
-
-        time_sequence([
-            [2000, () => {
-                music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground);
-                customer.destroy(effects.disintegrate, 500);
-            }],
-            [3000, () => {
-                voluntold.sayText("Uh oh.", 500, false)
-            }],
-            [2000, () => {
-                startSequenceArrestAndSoftlock()
-            }],
-        ])
-    }
-
-    if (removeCustomer) {
-        sprites.destroy(customer)
-
-        if (respawnShoppers) {
-            setWindowShoppers(1, sprites.dungeon.doorOpenNorth)
-        }
-    }
-
-    music.play(music.melodyPlayable(music.magicWand), music.PlaybackMode.InBackground)
-
-    if (giantCookiePowerup) {
-        return
-    }
-
-    hitFood(confection)
-}
-
 sprites.onOverlap(SpriteKind.BeetrootEnjoyer, SpriteKind.Food, function (sprite, otherSprite) {
     makePurchase(sprite, otherSprite, false)
 })
@@ -9753,6 +9737,10 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Employer, function (sprite, othe
     )
 
     if (hasBlueEyes) {
+        if (enraged) {
+            endRage()
+        }
+
         cardGameEnding()
         return
     }
@@ -10401,7 +10389,7 @@ hasBusCard = true
 enterHumbleHome()
 
 inventory = [
-    1, 5, 4, 11, 11, 11, 2, 11, 11, 1, 1, 1, 0,
+    1, 5, 4, 11, 11, 11 + 255, 2, 11, 11, 1, 1, 1, 0,
 ]
 
 // todo a
@@ -10468,8 +10456,3 @@ function drawingboard_2024_07_29() {
 }
 
 drawingboard_2024_07_29()
-
-
-
-
-
