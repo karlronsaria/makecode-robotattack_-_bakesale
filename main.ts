@@ -62,6 +62,7 @@ namespace SpriteKind {
     export const DeusExMachinaCard = SpriteKind.create()
     export const BlueEyesWhiteDragonCard = SpriteKind.create()
     export const RecipeCard = SpriteKind.create()
+    export const JumpPlayer = SpriteKind.create()
 }
 
 // /*
@@ -253,8 +254,8 @@ let recipe: recipe_t = {
 //   - actual: giant confection moves in wrong direction
 // todo
 // nerf skills
-// jump the shark
-//     turn companion into shark
+// [x] jump the shark
+//     [x] turn companion into shark
 // find the k-pop hater
 //     turn companion into k-pop stan
 // redesign Magic Mart tilemap
@@ -1338,6 +1339,12 @@ const Skill = {
     DECOY: 3,
 }
 
+const Companion = {
+    LUCKY_CAT: 0,
+    KING_SHARK: 1,
+    KPOP_STAN: 2,
+}
+
 const recipes = [
     {
         name: `grey`,
@@ -2400,6 +2407,1229 @@ class KitchenGame {
     }
 }
 
+class JumpGame {
+    static JUMP_MAX = 5
+    static GROUND = 6
+    static FINAL_LEVEL = 49
+    static TIMEOUT_MAX = 20
+
+    static me: Sprite = null
+    static jumps: number = JumpGame.JUMP_MAX
+    static level: number = 0
+    static timeout: number = 0
+    static dying: boolean = false
+    static attacking: boolean = true
+    static testing: boolean = false
+    static hasSpringBoots: boolean = false
+    static hasMagicAxe: boolean = false
+    static intervals: number[] = []
+
+    static Player = SpriteKind.create()
+    static Enemy = SpriteKind.create()
+    static Projectile = SpriteKind.create()
+    static Neutral = SpriteKind.create()
+    static Goal = SpriteKind.create()
+    static Sharks = SpriteKind.create()
+    static MagicGear = SpriteKind.create()
+    static MagicTools = SpriteKind.create()
+    static Executives = SpriteKind.create()
+    static Dark = SpriteKind.create()
+
+    static onA: () => void
+    static onB: () => void
+    static onUp: () => void
+    static onDown: () => void
+    static onLeft: () => void
+    static onRight: () => void
+    static onCountdownEnd: () => void
+    static onLifeZero: () => void
+
+    static prevLife: number
+    static prevScore: number
+
+    static stopped: boolean = false
+
+    static callback: (
+        win: boolean,
+        score: number,
+        hp: number,
+    ) => void
+
+    static init() {
+        JumpGame.jumps = JumpGame.JUMP_MAX
+        JumpGame.level = 0
+        JumpGame.timeout = 0
+        JumpGame.dying = false
+        JumpGame.attacking = true
+        JumpGame.testing = false
+        JumpGame.hasSpringBoots = false
+        JumpGame.hasMagicAxe = false
+        JumpGame.intervals = []
+    }
+
+    static start(
+        onA: () => void,
+        onB: () => void,
+        onUp: () => void,
+        onDown: () => void,
+        onLeft: () => void,
+        onRight: () => void,
+        onCountdownEnd: () => void,
+        onLifeZero: () => void,
+        callback: (
+            win: boolean,
+            score: number,
+            hp: number,
+        ) => void,
+    ) {
+        JumpGame.init()
+        JumpGame.prevLife = info.life()
+        JumpGame.prevScore = info.score()
+
+        JumpGame.onA = onA
+        JumpGame.onB = onB
+        JumpGame.onUp = onUp
+        JumpGame.onDown = onDown
+        JumpGame.onLeft = onLeft
+        JumpGame.onRight = onRight
+        JumpGame.onCountdownEnd = onCountdownEnd
+        JumpGame.onLifeZero = onLifeZero
+        JumpGame.callback = callback
+
+        for (let line of [
+            "Jump the Shark!",
+            "Survive",
+            "50 levels!",
+        ]) {
+            game.splash(line)
+        }
+
+        info.setLife(2)
+        info.setScore(0)
+        
+        scene.setBackgroundImage(img`
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7776677777777767777777777777777777777777777667777777776777777777777777777777777777766777777777677777777777777777777777777776677777777767777777777777777777777777
+            7666777777777667777777777777777777777767766677777777766777777777777777777777776776667777777776677777777777777777777777677666777777777667777777777777777777777767
+            7767766777667766777766777777777777777766776776677766776677776677777777777777776677677667776677667777667777777777777777667767766777667766777766777777777777777766
+            6666667767766766776766777777777777776676666666776776676677676677777777777777667666666677677667667767667777777777777766766666667767766766776766777777777777776676
+            6666677766766666766667777777777777666677666667776676666676666777777777777766667766666777667666667666677777777777776666776666677766766666766667777777777777666677
+            6666676666666676666677767777776667776667666667666666667666667776777777666777666766666766666666766666777677777766677766676666676666666676666677767777776667776667
+            6666666666666776677666667766677766777666666666666666677667766666776667776677766666666666666667766776666677666777667776666666666666666776677666667766677766777666
+            6666666666666766667766677677667766666666666666666666676666776667767766776666666666666666666667666677666776776677666666666666666666666766667766677677667766666666
+            66b666666666666666666667667776676666666666b666666666666666666667667776676666666666b666666666666666666667667776676666666666b6666666666666666666676677766766666666
+            66b6666666666666666666666b6776666666666666b6666666666666666666666b6776666666666666b6666666666666666666666b6776666666666666b6666666666666666666666b67766666666666
+            66b6666666666666666666666bb676666666666666b6666666666666666666666bb676666666666666b6666666666666666666666bb676666666666666b6666666666666666666666bb6766666666666
+            66b66666669bb666666669966bbb66666666666666b66666669bb666666669966bbb66666666666666b66666669bb666666669966bbb66666666666666b66666669bb666666669966bbb666666666666
+            66b66666699dbb666666dd9666bb66666666666666b666666999bb666666999666bb66666666666666b666666999bb666666999666bb66666666666666b666666999bb666666999666bb666666666666
+            6bb6669669966bbb69666d9966bb6666666666666bb6669669966bbb69666d9966bb6666666666666bb6669669966bbb69666d9966bb6666666666666bb6669669966bbb69666d9966bb666666666666
+            6bb666d96696d9bbb9966d9966bbb666666666666bb666d96696d9bbb9966d9966bbb666666666666bb666d96696d9bbb9966d9966bbb666666666666bb666d96696d9bbb9966d9966bbb66666666666
+            6bb66dd9999d996bb99ddd96666bb666666666666bb66dd9999d996bb99ddd96666bb666666666666bb66dd9999d996bb99ddd96666bb666666666666bb66dd9999d996bb99ddd96666bb66666666666
+            bbb666d9999d996bb99dd99669dbbb6696666666bbb666d9999d996bb99dd99669dbbb6696666666bbb666d9999d996bb99dd99669dbbb6696666666bbb666d9999d996bb99dd99669dbbb6696666666
+            bbbdd6d9999d999bbb9dd999996bbb6699966666bbbdd6d9999d999bbb9dd999996bbb6699966666bbbdd6d9999d999bbb9dd999996bbb6699966666bbbdd6d9999d999bbb9dd999996bbb6699966666
+            bbb6ddd9999d9999bb9dd9999d6bbb9699666666bbb6ddd9999d9999bb9dd9999d6bbb9699666666bbb6ddd9999d9999bb9dd9999d6bbb9699666666bbb6ddd9999d9999bb9dd9999d6bbb9699666666
+            bbb6ddd999d99999bbbdd9999d9bbb9999669966bbb6ddd999d99999bbbdd9999d9bbb9999669966bbb6ddd999d99999bbbdd9999d9bbb9999669966bbb6ddd999d99999bbbdd9999d9bbb9999669966
+            bbbdddd999d999999bbdd9999d9bbbb9999d9996bbbdddd999d999999bbdd9999d9bbbb9999d9996bbbdddd999d999999bbdd9999d9bbbb9999d9996bbbdddd999d999999bbdd9999d9bbbb9999d9996
+            bb9dddd99dd9999999bb9999dd9bbbb9999d9999bb9dddd99dd9999999bb9999dd9bbbb9999d9999bb9dddd99dd9999999bb9999dd9bbbb9999d9999bb9dddd99dd9999999bb9999dd9bbbb9999d9999
+            bb99ddddd999999999bbb999d999bbb9999d9999bb99ddddd999999999bbb999d999bbb9999d9999bb99ddddd999999999bbb999d999bbb9999d9999bb99ddddd999999999bbb999d999bbb9999d9999
+            bb99dddd9999999999dbbbbdd999bbb9999d999bbb99dddd9999999999dbbbbdd999bbb9999d999bbb99dddd9999999999dbbbbdd999bbb9999d999bbb99dddd9999999999dbbbbdd999bbb9999d999b
+            bb99ddd99999999999ddbbbb9999bbbb999d999bbb99ddd99999999999ddbbbb9999bbbb999d999bbb99ddd99999999999ddbbbb9999bbbb999d999bbb99ddd99999999999ddbbbb9999bbbb999d999b
+            bb99ddd99999999999ddbbbbbb99bbbb999d999bbb99ddd99999999999ddbbbbbb99bbbb999d999bbb99ddd99999999999ddbbbbbb99bbbb999d999bbb99ddd99999999999ddbbbbbb99bbbb999d999b
+            b9999dd9999999999ddddbbbbbbbbbbbb999d99bb9999dd9999999999ddddbbbbbbbbbbbb999d99bb9999dd9999999999ddddbbbbbbbbbbbb999d99bb9999dd9999999999ddddbbbbbbbbbbbb999d99b
+            b9999ddd999999999dd99999bbbbbbbbb999d99bb9999ddd999999999dd99999bbbbbbbbb999d99bb9999ddd999999999dd99999bbbbbbbbb999d99bb9999ddd999999999dd99999bbbbbbbbb999d99b
+            b9999dddd99999999dd999999bbbbbbbb999d9bbb9999dddd99999999dd999999bbbbbbbb999d9bbb9999dddd99999999dd999999bbbbbbbb999d9bbb9999dddd99999999dd999999bbbbbbbb999d9bb
+            b9999ddddd999999ddd9999999bbbbbbb999dbbbb9999ddddd999999ddd9999999bbbbbbb999dbbbb9999ddddd999999ddd9999999bbbbbbb999dbbbb9999ddddd999999ddd9999999bbbbbbb999dbbb
+            dd99999ddddd9999ddd999999999bbbbb999bbbbdd99999ddddd9999ddd999999999bbbbb999bbbbdd99999ddddd9999ddd999999999bbbbb999bbbbdd99999ddddd9999ddd999999999bbbbb999bbbb
+            9d99999ddddddd9ddd9999999999bbbbb99bbbb99d99999ddddddd9ddd9999999999bbbbb99bbbb99d99999ddddddd9ddd9999999999bbbbb99bbbb99d99999ddddddd9ddd9999999999bbbbb99bbbb9
+            9d999999dddddddddd9999999999bbbbb99bbb999d999999dddddddddd9999999999bbbbb99bbb999d999999dddddddddd9999999999bbbbb99bbb999d999999dddddddddd9999999999bbbbb99bbb99
+            9d999999ddddddddd99999999999bbbbb99bb9999d999999ddddddddd99999999999bbbbb99bb9999d999999ddddddddd99999999999bbbbb99bb9999d999999ddddddddd99999999999bbbbb99bb999
+            9dd99999ddddddd9999999999999bbbbb99bbd999dd99999ddddddd9999999999999bbbbb99bbd999dd99999ddddddd9999999999999bbbbb99bbd999dd99999ddddddd9999999999999bbbbb99bbd99
+            99dd9999dddddd99999999999999bbbbb99bbd9999dd9999dddddd99999999999999bbbbb99bbd9999dd9999dddddd99999999999999bbbbb99bbd9999dd9999dddddd99999999999999bbbbb99bbd99
+            99ddd999dddddd99999999999999bbbbb9bbbdd999ddd999dddddd99999999999999bbbbb9bbbdd999ddd999dddddd99999999999999bbbbb9bbbdd999ddd999dddddd99999999999999bbbbb9bbbdd9
+            9999dddddddddd9999999999999bbbbbb9bbb9d99999dddddddddd9999999999999bbbbbb9bbb9d99999dddddddddd9999999999999bbbbbb9bbb9d99999dddddddddd9999999999999bbbbbb9bbb9d9
+            9999dddddddddd9999999999999bbbbbbbbb99d99999dddddddddd9999999999999bbbbbbbbb99d99999dddddddddd9999999999999bbbbbbbbb99d99999dddddddddd9999999999999bbbbbbbbb99d9
+            999999dddddddd9999999999999bbbbbbbbb99dd999999dddddddd9999999999999bbbbbbbbb99dd999999dddddddd9999999999999bbbbbbbbb99dd999999dddddddd9999999999999bbbbbbbbb99dd
+            d9999999dddddd999999999999bbbbbbbbb9999dd9999999dddddd999999999999bbbbbbbbb9999dd9999999dddddd999999999999bbbbbbbbb9999dd9999999dddddd999999999999bbbbbbbbb9999d
+            dd9999999ddddd999999999999bbbbbbbbb99999dd9999999ddddd999999999999bbbbbbbbb99999dd9999999ddddd999999999999bbbbbbbbb99999dd9999999ddddd999999999999bbbbbbbbb99999
+            dd9999999ddddd999999999999bbbbbbbb999999dd9999999ddddd999999999999bbbbbbbb999999dd9999999ddddd999999999999bbbbbbbb999999dd9999999ddddd999999999999bbbbbbbb999999
+            9d9999999ddddd99999999999bbbbbbbbb9999999d9999999ddddd99999999999bbbbbbbbb9999999d9999999ddddd99999999999bbbbbbbbb9999999d9999999ddddd99999999999bbbbbbbbb999999
+            9d9999999ddddd99999999999bbbbbbbbb9999999d9999999ddddd99999999999bbbbbbbbb9999999d9999999ddddd99999999999bbbbbbbbb9999999d9999999ddddd99999999999bbbbbbbbb999999
+            9d9999999ddddd99999999999bbbbbbbbb9999999d9999999ddddd99999999999bbbbbbbbb9999999d9999999ddddd99999999999bbbbbbbbb9999999d9999999ddddd99999999999bbbbbbbbb999999
+            9d9999999ddddd99999999999bbbbbbbbb9999999d9999999ddddd99999999999bbbbbbbbb9999999d9999999ddddd99999999999bbbbbbbbb9999999d9999999ddddd99999999999bbbbbbbbb999999
+            9dd999999ddddd99999999999bbbbbbbb99999999dd999999ddddd99999999999bbbbbbbb99999999dd999999ddddd99999999999bbbbbbbb99999999dd999999ddddd99999999999bbbbbbbb9999999
+            9dd999999ddddd99999999999bbbbbbbb99999999dd999999ddddd99999999999bbbbbbbb99999999dd999999ddddd99999999999bbbbbbbb99999999dd999999ddddd99999999999bbbbbbbb9999999
+            ddd999999ddddd99999999999bbbbbbbb9999999ddd999999ddddd99999999999bbbbbbbb9999999ddd999999ddddd99999999999bbbbbbbb9999999ddd999999ddddd99999999999bbbbbbbb9999999
+            dd9999999ddddd99999999999bbbbbbbb9999999dd9999999ddddd99999999999bbbbbbbb9999999dd9999999ddddd99999999999bbbbbbbb9999999dd9999999ddddd99999999999bbbbbbbb9999999
+            dd9999999dddddd9999999999bbbbbbbb9999999dd9999999dddddd9999999999bbbbbbbb9999999dd9999999dddddd9999999999bbbbbbbb9999999dd9999999dddddd9999999999bbbbbbbb9999999
+            dd9999999dddddd9999999999bbbbbbbb9999999dd9999999dddddd9999999999bbbbbbbb9999999dd9999999dddddd9999999999bbbbbbbb9999999dd9999999dddddd9999999999bbbbbbbb9999999
+            dd9999999dddddd9999999999bbbbbbb99999999dd9999999dddddd9999999999bbbbbbb99999999dd9999999dddddd9999999999bbbbbbb99999999dd9999999dddddd9999999999bbbbbbb99999999
+            d99999999dddddd9999999999bbbbbbb9999999dd99999999dddddd9999999999bbbbbbb9999999dd99999999dddddd9999999999bbbbbbb9999999dd99999999dddddd9999999999bbbbbbb9999999d
+            d99999999dddddd9999999999bbbbbbb999999ddd99999999dddddd9999999999bbbbbbb999999ddd99999999dddddd9999999999bbbbbbb999999ddd99999999dddddd9999999999bbbbbbb999999dd
+            d99999999dddddd9999999999bbbbbbb999999ddd99999999dddddd9999999999bbbbbbb999999ddd99999999dddddd9999999999bbbbbbb999999ddd99999999dddddd9999999999bbbbbbb999999dd
+            999999999ddddddd999999999bbbbbbb99999ddd999999999ddddddd999999999bbbbbbb99999ddd999999999ddddddd999999999bbbbbbb99999ddd999999999ddddddd999999999bbbbbbb99999ddd
+            999999999ddddddd999999999bbbbbbb99999ddd999999999ddddddd999999999bbbbbbb99999ddd999999999ddddddd999999999bbbbbbb99999ddd999999999ddddddd999999999bbbbbbb99999ddd
+            999999999ddddddd999999999bbbbbbb99999ddd999999999ddddddd999999999bbbbbbb99999ddd999999999ddddddd999999999bbbbbbb99999ddd999999999ddddddd999999999bbbbbbb99999ddd
+            999999999dddddddd99999999bbbbbbb9999dddd999999999dddddddd99999999bbbbbbb9999dddd999999999dddddddd99999999bbbbbbb9999dddd999999999dddddddd99999999bbbbbbb9999dddd
+            999999999dddddddd99999999bbbbbbb9999dddd999999999dddddddd99999999bbbbbbb9999dddd999999999dddddddd99999999bbbbbbb9999dddd999999999dddddddd99999999bbbbbbb9999dddd
+            999999999dddddddd99999999bbbbbbb9999ddd9999999999dddddddd99999999bbbbbbb9999ddd9999999999dddddddd99999999bbbbbbb9999ddd9999999999dddddddd99999999bbbbbbb9999ddd9
+            9999999999dddddddd999999bbbbbbbb9999ddd99999999999dddddddd999999bbbbbbbb9999ddd99999999999dddddddd999999bbbbbbbb9999ddd99999999999dddddddd999999bbbbbbbb9999ddd9
+            d999999999dddddddd999999bbbbbbbbddddddddd999999999dddddddd999999bbbbbbbbddddddddd999999999dddddddd999999bbbbbbbbddddddddd999999999dddddddd999999bbbbbbbbdddddddd
+            ddddd99999dddddddd999999bbbbbbbbbdddddddddddd99999dddddddd999999bbbbbbbbbdddddddddddd99999dddddddd999999bbbbbbbbbdddddddddddd99999dddddddd999999bbbbbbbbbddddddd
+            dddddddd99ddddddddd999ddbbbbbbbbbddddddddddddddd99ddddddddd999ddbbbbbbbbbddddddddddddddd99ddddddddd999ddbbbbbbbbbddddddddddddddd99ddddddddd999ddbbbbbbbbbddddddd
+            ddddddddddddddddddd9ddddbbbbbbbbbdddddddddddddddddddddddddd9ddddbbbbbbbbbdddddddddddddddddddddddddd9ddddbbbbbbbbbdddddddddddddddddddddddddd9ddddbbbbbbbbbddddddd
+            ddddddddddddddddddddddddbbbbbbbbbbddddddddddddddddddddddddddddddbbbbbbbbbbddddddddddddddddddddddddddddddbbbbbbbbbbddddddddddddddddddddddddddddddbbbbbbbbbbdddddd
+            ddddddddddddddddddddddddbbbbbbbbbbddddddddddddddddddddddddddddddbbbbbbbbbbddddddddddddddddddddddddddddddbbbbbbbbbbddddddddddddddddddddddddddddddbbbbbbbbbbdddddd
+            dddddddddddddddddddddddbbbbbbbbbbbdddddddddddddddddddddddddddddbbbbbbbbbbbdddddddddddddddddddddddddddddbbbbbbbbbbbdddddddddddddddddddddddddddddbbbbbbbbbbbdddddd
+            dddddddddddddddddddddddbbbbbbbbbbbbddddddddddddddddddddddddddddbbbbbbbbbbbbddddddddddddddddddddddddddddbbbbbbbbbbbbddddddddddddddddddddddddddddbbbbbbbbbbbbddddd
+            dddddddddddddddddddddddbbbbbbbbbbbbddddddddddddddddddddddddddddbbbbbbbbbbbbddddddddddddddddddddddddddddbbbbbbbbbbbbddddddddddddddddddddddddddddbbbbbbbbbbbbddddd
+            dddddddddddddddddddddddbbbbbbbbbbbbddddddddddddddddddddddddddddbbbbbbbbbbbbddddddddddddddddddddddddddddbbbbbbbbbbbbddddddddddddddddddddddddddddbbbbbbbbbbbbddddd
+            dddddddddddddddddddddddbbbbbbbbbbbbddddddddddddddddddddddddddddbbbbbbbbbbbbddddddddddddddddddddddddddddbbbbbbbbbbbbddddddddddddddddddddddddddddbbbbbbbbbbbbddddd
+            ddddddddddddddddddd7777777777bbbbbbdddddddddddddddddddddddd7777777777bbbbbbdddddddddddddddddddddddd7777777777bbbbbbdddddddddddddddddddddddd7777777777bbbbbbddddd
+            dddddddddddddd77777777777777777777bddddddddddddddddddd77777777777777777777bddddddddddddddddddd77777777777777777777bddddddddddddddddddd77777777777777777777bddddd
+            ddddddddddd7777777777777777777777777ddddddddddddddd7777777777777777777777777ddddddddddddddd7777777777777777777777777ddddddddddddddd7777777777777777777777777dddd
+            dddddddd777777777777777777777777777777dddddddddd777777777777777777777777777777dddddddddd777777777777777777777777777777dddddddddd777777777777777777777777777777dd
+            ddddd77777777777777777777777777777777777ddddd77777777777777777777777777777777777ddddd77777777777777777777777777777777777ddddd77777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+            7777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777777
+        `)
+        JumpGame.firstLevel()
+        //     let otherMe: Sprite = sprites.create(assets.image`why`, Jump.Neutral) // todo
+
+        JumpGame.intervals.push(setInterval(
+            () => {
+                if (!JumpGame.attacking) {
+                    return
+                }
+
+                for (let sprite of sprites.allOfKind(JumpGame.Enemy)) {
+                    if (Math.percentChance(30)) {
+                        music.play(music.melodyPlayable(music.pewPew), music.PlaybackMode.InBackground)
+                        sprite.vy = -150
+                    }
+                }
+            },
+            250,
+        ))
+
+        JumpGame.intervals.push(setInterval(
+            () => {
+                JumpGame.timeout -= 2
+
+                if (JumpGame.timeout === 0) {
+                    info.startCountdown(5)
+                }
+
+                if (!JumpGame.attacking) {
+                    return
+                }
+
+                info.changeScoreBy(1)
+
+                for (let sprite of sprites.allOfKind(JumpGame.Enemy)) {
+                    let projectile = sprites.createProjectileFromSprite(img`
+                            . . . . . . . . . . . . . . . .
+                            . . . . . . . . . . . . . . . .
+                            . . . . . . . . . . . . . . . .
+                            . . . . . . . . . . . . . . . .
+                            f f f f f f f f f f f f f f f .
+                            f 1 1 1 1 1 1 1 1 1 1 1 1 1 f .
+                            f 1 f 1 1 f 1 1 f f 1 1 f 1 f .
+                            f 1 f 1 1 f 1 f 1 1 f 1 f 1 f .
+                            f 1 f f 1 f 1 f 1 1 f 1 f 1 f .
+                            f 1 f 1 f f 1 f 1 1 f 1 f 1 f .
+                            f 1 f 1 f f 1 f 1 1 f 1 1 1 f .
+                            f 1 f 1 1 f 1 1 f f 1 1 f 1 f .
+                            f 1 1 1 1 1 1 1 1 1 1 1 1 1 f .
+                            f f f f f f f f f f f f f f f .
+                            . . . . . . . . . . . . . . . .
+                            . . . . . . . . . . . . . . . .
+                        `, sprite, randint(-75, -150), 0)
+                    projectile.setKind(JumpGame.Projectile)
+                }
+            },
+            2000,
+        ))
+
+        JumpGame.intervals.push(setInterval(
+            () => {
+                if (JumpGame.jumps === JumpGame.JUMP_MAX) {
+                    return
+                }
+
+                JumpGame.jumps++
+                JumpGame.me.startEffect(effects.coolRadial, 250)
+            },
+            2000,
+        ))
+
+        JumpGame.intervals.push(setInterval(
+            () => {
+                if (!JumpGame.attacking || JumpGame.testing) {
+                    return
+                }
+
+                JumpGame.newShark(80, 20)
+            },
+            3000,
+        ))
+
+        controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
+            if (JumpGame.dying) {
+                return
+            }
+
+            if (JumpGame.attacking) {
+                if (JumpGame.jumps === 0) {
+                    JumpGame.me.sayText("Out of stamina!", 500, false)
+                    return
+                }
+
+                JumpGame.jumps--
+                JumpGame.me.sayText(`${JumpGame.jumps}`, 500, false)
+            }
+
+            JumpGame.me.vy = -200
+        })
+
+        controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
+            if (!JumpGame.hasMagicAxe) {
+                return
+            }
+
+            if (JumpGame.me === null) {
+                return
+            }
+
+            let loc = JumpGame.me.tilemapLocation()
+            let tileBelow = tiles.getTileLocation(loc.col, loc.row + 1)
+
+            if (tileBelow.isWall()) {
+                return
+            }
+
+            tiles.setWallAt(tileBelow, true)
+            tiles.setTileAt(tileBelow, img`
+                e 3 3 3 3 3 3 3 3 3 3 3 3 3 3 e
+                e 4 4 4 4 4 4 4 4 4 4 4 4 4 4 e
+                e e e e e e e e e e e e e e e e
+                e 4 e 4 4 4 4 4 4 4 4 4 4 e 4 e
+                e 4 e e e e e e e e e e e e 4 e
+                e 4 e 3 3 3 3 3 3 3 3 3 3 e 4 e
+                e 4 e 4 4 4 4 4 4 4 4 4 4 e 4 e
+                e 4 e e e e e e e e e e e e 4 e
+                e 4 e 3 3 3 3 3 3 3 3 3 3 e 4 e
+                e 4 e 4 4 4 4 4 4 4 4 4 4 e 4 e
+                e 3 3 3 3 3 3 3 3 3 3 3 3 3 3 e
+                e 4 4 4 4 4 4 4 4 4 4 4 4 4 4 e
+                e e e e e e e e e e e e e e e e
+                e e c c c c c c c c c c c c e e
+                e e c c c c c c c c c c c c e e
+                e e e e e e e e e e e e e e e e
+            `)
+
+            if (Math.percentChance(5)) {
+                tiles.setTileAt(tileBelow, img`
+                    . . . . . . . . . . . . . .
+                    e e e . . . . e e e . . . .
+                    c d d c . . c d d c . . . .
+                    c b d d f f d d b c . . . .
+                    c 3 b d d b d b 3 c . . . .
+                    f b 3 d d d d 3 b f . . . .
+                    e d d d d d d d d e . . . .
+                    e d f d d d d f d e . b f b
+                    f d d f d d f d d f . f d f
+                    f b d d b b d d 2 b f f d f
+                    . f 2 2 2 2 2 2 d b b d b f
+                    . f d d d d d d d f f f f .
+                    . . f d b d f d f . . . . .
+                    . . . f f f f f f . . . . .
+                `)
+
+                music.play(
+                    music.createSoundEffect(
+                        WaveShape.Sine,
+                        5000, 0, 255, 0, 200,
+                        SoundExpressionEffect.None,
+                        InterpolationCurve.Linear
+                    ),
+                    music.PlaybackMode.UntilDone
+                )
+            }
+
+            music.play(
+                music.melodyPlayable(music.powerUp),
+                music.PlaybackMode.InBackground
+            )
+
+            JumpGame.hasMagicAxe = false
+
+            timer.after(3000, function () {
+                tiles.setWallAt(tileBelow, false)
+                tiles.setTileAt(tileBelow, img`
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                    . . . . . . . . . . . . . . . .
+                `)
+
+                music.play(
+                    music.melodyPlayable(music.powerDown),
+                    music.PlaybackMode.InBackground
+                )
+
+                JumpGame.hasMagicAxe = true
+            })
+        })
+
+        info.onCountdownEnd(function () {
+            let sprite: Sprite = sprites.create(
+                assets.image`vTanRageFace`,
+                JumpGame.Dark,
+            )
+
+            sprite.setScale(2)
+            sprite.setFlag(SpriteFlag.GhostThroughWalls, true)
+
+            tiles.placeOnTile(
+                sprite,
+                tiles.getTileLocation(-7, JumpGame.me.tilemapLocation().row - 3),
+            )
+
+            sprite.follow(JumpGame.me, 25)
+        })
+        info.onLifeZero(function () {
+            JumpGame.stop(false)
+        })
+        scene.onOverlapTile(JumpGame.Player, sprites.dungeon.hazardLava0, function (sprite, location) {
+            JumpGame.die(sprite)
+        })
+        scene.onOverlapTile(JumpGame.Player, sprites.dungeon.hazardLava1, function (sprite, location) {
+            JumpGame.die(sprite)
+        })
+        scene.onOverlapTile(JumpGame.Player, assets.tile`JumpGameExitTile`, function (sprite: Sprite, location: tiles.Location) {
+            switch (JumpGame.level) {
+                case 14:
+                    JumpGame.interlude()
+                    return
+                case 24:
+                    JumpGame.attainMagicBoots()
+                    return
+                case 34:
+                    JumpGame.attainMagicAxe()
+                    return
+                case JumpGame.FINAL_LEVEL - 1:
+                    JumpGame.finalLevel()
+                    return
+                default:
+                    break
+            }
+
+            JumpGame.challengeLevel()
+        })
+
+        sprites.onOverlap(JumpGame.Player, JumpGame.Dark, function (sprite, otherSprite) {
+            JumpGame.die(sprite)
+        })
+        sprites.onOverlap(JumpGame.Player, JumpGame.Executives, function (sprite, otherSprite) {
+            let loc = otherSprite.tilemapLocation()
+
+            tiles.placeOnTile(
+                sprite,
+                tiles.getTileLocation(loc.col - 1, loc.row),
+            )
+
+            for (let line of [
+                "Look, I'm not going to beat around the bush.",
+                "The development of this game",
+                "was an unmitigated disaster.",
+            ]) {
+                game.showLongText(line, DialogLayout.Bottom)
+            }
+        })
+        sprites.onOverlap(JumpGame.Player, JumpGame.MagicTools, function (sprite, otherSprite) {
+            otherSprite.destroy()
+            music.play(music.melodyPlayable(music.magicWand), music.PlaybackMode.InBackground)
+            JumpGame.hasMagicAxe = true
+            game.showLongText("You got the magic axe!", DialogLayout.Bottom)
+            game.showLongText("Press 'B' to stand mid-air for 3 seconds.", DialogLayout.Bottom)
+        })
+        sprites.onOverlap(JumpGame.Player, JumpGame.MagicGear, function (sprite, otherSprite) {
+            otherSprite.destroy()
+            music.play(music.melodyPlayable(music.magicWand), music.PlaybackMode.InBackground)
+            JumpGame.hasSpringBoots = true
+            game.showLongText("You got the magic boots!", DialogLayout.Bottom)
+            game.showLongText("Leap on your enemies to gain extra jumps.", DialogLayout.Bottom)
+        })
+        sprites.onOverlap(JumpGame.Player, JumpGame.Projectile, function (sprite, otherSprite) {
+            JumpGame.hitAndPassThru(otherSprite)
+        })
+        sprites.onOverlap(JumpGame.Player, JumpGame.Sharks, function (sprite, otherSprite) {
+            if (JumpGame.hasFootstool(sprite, otherSprite)) {
+                JumpGame.footstool(sprite, otherSprite)
+                return
+            }
+
+            JumpGame.hitAndPassThru(otherSprite)
+        })
+        sprites.onOverlap(JumpGame.Player, JumpGame.Enemy, function (sprite, otherSprite) {
+            if (JumpGame.hasFootstool(sprite, otherSprite)) {
+                JumpGame.footstool(sprite, otherSprite)
+                otherSprite.sayText("Ow!", 500, false)
+                return
+            }
+
+            otherSprite.sayText("Dude, personal space.", 500, false)
+            info.changeScoreBy(-1)
+        })
+        sprites.onOverlap(JumpGame.Player, JumpGame.Goal, function (sprite, otherSprite) {
+            JumpGame.stop(true)
+        })
+    }
+
+    static destroyAllSprites() {
+        for (let kind of [
+            JumpGame.Player,
+            JumpGame.Enemy,
+            JumpGame.Projectile,
+            JumpGame.Neutral,
+            JumpGame.Goal,
+            JumpGame.Sharks,
+            JumpGame.MagicGear,
+            JumpGame.MagicTools,
+            JumpGame.Executives,
+            JumpGame.Dark,
+        ]) {
+            sprites.destroyAllSpritesOfKind(kind)
+        }
+    }
+
+    static stopIntervals() {
+        for (const interval of JumpGame.intervals) {
+            clearInterval(interval)
+        }
+    }
+
+    static resetButtonHandlers() {
+        controller.A.onEvent(ControllerButtonEvent.Pressed, JumpGame.onA)
+        controller.B.onEvent(ControllerButtonEvent.Pressed, JumpGame.onB)
+        controller.up.onEvent(ControllerButtonEvent.Pressed, JumpGame.onUp)
+        controller.up.onEvent(ControllerButtonEvent.Repeated, JumpGame.onUp)
+        controller.down.onEvent(ControllerButtonEvent.Pressed, JumpGame.onDown)
+        controller.down.onEvent(ControllerButtonEvent.Repeated, JumpGame.onDown)
+        controller.left.onEvent(ControllerButtonEvent.Pressed, JumpGame.onLeft)
+        controller.left.onEvent(ControllerButtonEvent.Repeated, JumpGame.onLeft)
+        controller.right.onEvent(ControllerButtonEvent.Pressed, JumpGame.onRight)
+        controller.right.onEvent(ControllerButtonEvent.Repeated, JumpGame.onRight)
+        info.onCountdownEnd(JumpGame.onCountdownEnd)
+        info.onLifeZero(JumpGame.onLifeZero)
+    }
+
+    static stop(win: boolean) {
+        if (JumpGame.stopped) {
+            return
+        }
+
+        JumpGame.stopped = true
+        let score = info.score()
+        let hp = info.life()
+
+        info.setScore(JumpGame.prevScore)
+        info.setLife(JumpGame.prevLife)
+
+        JumpGame.stopIntervals()
+        JumpGame.resetButtonHandlers()
+        JumpGame.destroyAllSprites()
+        JumpGame.callback(win, score, hp)
+    }
+
+    static hitAndPassThru(sprite: Sprite) {
+        sprite.setFlag(SpriteFlag.GhostThroughSprites, true)
+        info.changeLifeBy(-1)
+        scene.cameraShake(8, 500)
+        music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground)
+    }
+    static hasFootstool(sprite: Sprite, otherSprite: Sprite): boolean {
+        return JumpGame.hasSpringBoots && sprite.bottom - 8 <= otherSprite.top
+    }
+    static footstool(sprite: Sprite, otherSprite: Sprite) {
+        sprite.vy = -200
+        music.play(music.melodyPlayable(music.baDing), music.PlaybackMode.InBackground)
+        info.changeScoreBy(200)
+        sprite.sayText("+200", 500, false)
+        JumpGame.hasSpringBoots = false
+
+        timer.after(500, function () {
+            JumpGame.hasSpringBoots = true
+        })
+    }
+    static setMagicUpgrade(sprite: Sprite) {
+        tiles.placeOnTile(sprite, tiles.getTileLocation(15, 4))
+        sprite.setFlag(SpriteFlag.GhostThroughWalls, true)
+
+        animation.runMovementAnimation(
+            sprite,
+            animation.animationPresets(animation.bobbing),
+            2000,
+            true,
+        )
+    }
+    static resetSprites() {
+        for (let kind of [
+            JumpGame.Player,
+            JumpGame.Enemy,
+            JumpGame.Neutral,
+            JumpGame.Executives,
+            JumpGame.Dark,
+        ]) {
+            sprites.destroyAllSpritesOfKind(kind)
+        }
+    }
+    static nextLevel(attack: boolean = true) {
+        JumpGame.attacking = attack
+        info.stopCountdown()
+        JumpGame.timeout = JumpGame.TIMEOUT_MAX
+        JumpGame.level++
+        JumpGame.resetSprites()
+        info.changeLifeBy(1)
+    }
+    static firstLevel() {
+        JumpGame.nextLevel()
+        tiles.setCurrentTilemap(tilemap`JumpGameCourse`)
+        tiles.placeOnTile(
+            JumpGame.newPlot(),
+            tiles.getTileLocation(8, JumpGame.GROUND - 1),
+        )
+        JumpGame.newMe()
+    }
+    static finalLevel() {
+        JumpGame.nextLevel(false)
+        tiles.setCurrentTilemap(tilemap`JumpGameGoal`)
+
+        let pedestal = sprites.create(img`
+            .......bbbbbbbbbbbbbbbbbb.......
+            ......bddddddddddddddddddb......
+            .....bddddddddddddddddddddb.....
+            ....bddddddddddddddddddddddb....
+            ...bddddddddddddddddddddddddb...
+            ..bddddddddddddddddddddddddddb..
+            ..c11111111111111111111111111c..
+            ..c11111111111111111111111111c..
+            .bccccccccccccccccccccccccccccb.
+            bb11111dd11dbbbbbbbbd11dd11111bb
+            c11bbcc11dd11dbbbbd11dd11ccbb11c
+            c1bbddbcb11dd111111dd11bcbddbb1c
+            c1bbbddbdbd11dddddd11dbdbddbbb1c
+            c11bbddcddbbd111111dbbddcddbb11c
+            cb1111dcbd11bbbbbbbb11dbcd1111bc
+            .cb111ccbdd1111111111ddbcc111bc.
+            ..cccc.cbdbb1bb11bb1bbdbc.cccc..
+            .......cbdbb1db11bd1bbdbc.......
+            .......cbdbd1dd11dd1dbdbc.......
+            .......cbdbd1dd11dd1dbdbc.......
+            ......ccbdbd1dd11dd1dbdbcc......
+            .....cbbbdbd1dd11dd1dbdbbbc.....
+            .....cdbbdbd1dd11dd1dbdbbdc.....
+            .....c11bbbd1dd11dd1dbbb11c.....
+            .....cd111bbbbbbbbbbbb111dc.....
+            ....cccd1111111111111111dccc....
+            ...cbddbbb111111111111bbbddbc...
+            ..cbddddddbbbbbbbbbbbbddddddbc..
+            ..c11111111111111111111111111c..
+            ..c11111111111111111111111111c..
+            ..c11111111111111111111111111c..
+            ..cbbbbbbbbbbbbbbbbbbbbbbbbbbc..
+        `, JumpGame.Neutral)
+        let orb = sprites.create(img`
+                    . . . . . b b b b b b . . . . .
+                    . . . b b 9 9 9 9 9 9 b b . . .
+                    . . b b 9 9 9 9 9 9 9 9 b b . .
+                    . b b 9 d 9 9 9 9 9 9 9 9 b b .
+                    . b 9 d 9 9 9 9 9 1 1 1 9 9 b .
+                    b 9 d d 9 9 9 9 9 1 1 1 9 9 9 b
+                    b 9 d 9 9 9 9 9 9 1 1 1 9 9 9 b
+                    b 9 3 9 9 9 9 9 9 9 9 9 1 9 9 b
+                    b 5 3 d 9 9 9 9 9 9 9 9 9 9 9 b
+                    b 5 3 3 9 9 9 9 9 9 9 9 9 d 9 b
+                    b 5 d 3 3 9 9 9 9 9 9 9 d d 9 b
+                    . b 5 3 3 3 d 9 9 9 9 d d 5 b .
+                    . b d 5 3 3 3 3 3 3 3 d 5 b b .
+                    . . b d 5 d 3 3 3 3 5 5 b b . .
+                    . . . b b 5 5 5 5 5 5 b b . . .
+                    . . . . . b b b b b b . . . . .
+        `, JumpGame.Goal)
+
+        tiles.placeOnTile(
+            pedestal,
+            tiles.getTileLocation(57, 23),
+        )
+        tiles.placeOnTile(
+            orb,
+            tiles.getTileLocation(57, 22)
+        )
+
+        pedestal.y -= 8
+        orb.y -= 12
+        JumpGame.newMe(1, 50)
+    }
+    static challengeLevel() {
+        JumpGame.nextLevel()
+        let obstacle: number = -1
+
+        for (let tile of tiles.getTilesByType(assets.image`redArrow`)) {
+            tiles.setTileAt(tile, img`
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+            `)
+        }
+
+        tiles.setCurrentTilemap(tilemap`JumpGameCourse`)
+
+        for (let i = 0; i < Math.max(18, JumpGame.level); ++i) {
+            let tempGround = JumpGame.level > 4 && i > 8
+                ? randint(JumpGame.GROUND, JumpGame.GROUND + (5 - JumpGame.level) % 5)
+                : JumpGame.GROUND
+
+            JumpGame.setGround(i, tempGround)
+
+            if (obstacle < 0 && i > 8 && Math.percentChance(50 + i * 3)) {
+                obstacle = i
+
+                tiles.placeOnTile(
+                    JumpGame.newPlot(),
+                    tiles.getTileLocation(i, tempGround - 1),
+                )
+            }
+        }
+
+        for (let i = 8; i < Math.max(18, JumpGame.level); ++i) {
+            if (i === obstacle) {
+                continue
+            }
+
+            if (Math.percentChance(30 + i * 3)) {
+                JumpGame.setHazard(i)
+            }
+        }
+
+        let goal = randint(15, Math.max(18, JumpGame.level) - 1)
+
+        if (goal === obstacle) {
+            goal++
+        }
+
+        JumpGame.setGoal(goal)
+        JumpGame.newMe()
+        JumpGame.me.sayText(`Level ${JumpGame.level}`, 2000, false)
+    }
+    static interlude() {
+        JumpGame.nextLevel()
+        tiles.setCurrentTilemap(tilemap`JumpGameInterlude`)
+        tiles.placeOnTile(
+            JumpGame.newPlot(),
+            tiles.getTileLocation(28, 28),
+        )
+        tiles.placeOnTile(
+            JumpGame.newPlot(),
+            tiles.getTileLocation(28, 42),
+        )
+        tiles.placeOnTile(
+            sprites.create(
+                assets.image`executive`,
+                JumpGame.Executives,
+            ),
+            tiles.getTileLocation(27, 14),
+        )
+        JumpGame.newMe(2, 42)
+    }
+    static attainMagicBoots() {
+        JumpGame.nextLevel(false)
+        tiles.setCurrentTilemap(tilemap`JumpGameMagicItemCourse000`)
+
+        JumpGame.setMagicUpgrade(sprites.create(
+            assets.image`magicBoots`,
+            JumpGame.MagicGear,
+        ))
+
+        for (let i = 20; i <= 60; i += 8) {
+            tiles.placeOnTile(
+                JumpGame.newPlot(false),
+                tiles.getTileLocation(i, 7)
+            )
+        }
+
+        JumpGame.newMe()
+    }
+    static attainMagicAxe() {
+        JumpGame.nextLevel(false)
+        tiles.setCurrentTilemap(tilemap`JumpGameMagicItemCourse000`)
+
+        JumpGame.setMagicUpgrade(sprites.create(
+            assets.image`magicAxe`,
+            JumpGame.MagicTools,
+        ))
+
+        JumpGame.newMe()
+    }
+    static die(sprite: Sprite) {
+        JumpGame.dying = true
+        sprites.destroy(sprite, effects.fire, 2000)
+        scene.cameraShake(4, 500)
+        music.play(music.melodyPlayable(music.bigCrash), music.PlaybackMode.InBackground)
+        sprite.sayText("AAAAAAAH!!")
+
+        timer.after(1000, function () {
+            JumpGame.stop(false)
+        })
+    }
+    static newPlot(falling: boolean = true) {
+        let thePlot = sprites.create(img`
+            . . . b b b b b b b b b . . . .
+            . . b 1 d d d d d d d 1 b . . .
+            . b 1 1 1 1 1 1 1 1 1 1 1 b . .
+            . b d b c c c c c c c b d b . .
+            . b d c 6 6 6 6 6 6 6 c d b . .
+            . b d c 6 d 6 6 6 6 6 c d b . .
+            . b d c 6 6 6 6 6 6 6 c d b . .
+            . b d c 6 6 6 6 6 6 6 c d b . .
+            . b d c 6 6 6 6 6 6 6 c d b . .
+            . b d c c c c c c c c c d b . .
+            . c b b b b b b b b b b b c . .
+            c b c c c c c c c c c c c b c .
+            c 1 d d d d d d d d d d d 1 c .
+            c 1 d 1 1 d 1 1 d 1 1 d 1 1 c .
+            c b b b b b b b b b b b b b c .
+            c c c c c c c c c c c c c c c .
+        `, JumpGame.Enemy)
+
+        if (falling) {
+            thePlot.ay = 300
+        }
+
+        return thePlot
+    }
+    static newMe(
+        col: number | null = null,
+        row: number | null = null
+    ) {
+        if (col === null) {
+            col = 1
+        }
+
+        if (row === null) {
+            row = JumpGame.GROUND - 1
+        }
+
+        JumpGame.me = sprites.create(img`
+            . . . . . . . . . . . . . . . .
+            . . . . . . . c c c . . . . . .
+            . . . . . c c 5 5 5 c c . . . .
+            . . . c c b c 5 5 5 c c c c . .
+            . . c b b 5 b 5 5 5 b 5 b b c .
+            . . c b 5 5 b b 5 b b 5 5 b c .
+            . . . f 5 5 5 b b b 5 5 5 c . .
+            . . . f f 5 5 5 5 5 5 5 f . . .
+            . . . f f e e b f e e f . . . .
+            . . . f f f b 1 f b e f . . . .
+            . . . . f f b b b b b f . . . .
+            . . . . e e f e e e f . . . . .
+            . . . . e b b e b 5 f . . . . .
+            . . . . e b b e 5 5 5 f . . . .
+            . . . . . e e 5 5 5 b c . . . .
+            . . . . . . f f f f f . . . . .
+        `, JumpGame.Player)
+        scene.cameraFollowSprite(JumpGame.me)
+        controller.moveSprite(JumpGame.me, 100, 0)
+        tiles.placeOnTile(JumpGame.me, tiles.getTileLocation(col, row))
+        JumpGame.me.ay = 500
+        JumpGame.jumps = JumpGame.JUMP_MAX
+    }
+    static newShark(minY: number, maxY: number) {
+        const projectile: Sprite =
+            sprites.createProjectileFromSide(img`
+                .................ccfff..............
+                ................cddbbf..............
+                ...............cddbbf...............
+                .........ffffffccbbcf...............
+                ......fffbbbbbbbbcccff..............
+                .....fbbbbbbbbbbbbbbbcfff......ccccc
+                .....bcbbbbbffbcbcbbbbcccff...cdbbbc
+                .....bbb1111ffbbcbcbbbcccccffcddbbc.
+                .....fb11111111bcbcbbbcccccccbdbbf..
+                ......fccc33c11bbbbbbcccccccccbbcf..
+                .......fc131cc11bbbbccccccccffbccf..
+                ........f33c1111bbbcccccbdbc..fbbcf.
+                .........ff1111cbbbfdddddcc....fbbf.
+                ...........ccc1fbdbbfddcc.......fbbf
+                ..............ccfbdbbfc..........fff
+                .................fffff..............
+            `, -150, 0)
+        projectile.setKind(JumpGame.Sharks)
+        projectile.sayText("GUESS WHO!")
+        projectile.y = randint(minY, maxY)
+        projectile.setFlag(SpriteFlag.GhostThroughTiles, true)
+        projectile.setFlag(SpriteFlag.GhostThroughWalls, true)
+        music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.InBackground)
+    }
+    static removeTile(col: number, row: number) {
+        tiles.setTileAt(
+            tiles.getTileLocation(col, row),
+            img`
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+                . . . . . . . . . . . . . . . .
+            `,
+        )
+        tiles.setWallAt(
+            tiles.getTileLocation(col, row),
+            false,
+        )
+    }
+    static setGoal(col: number) {
+        JumpGame.removeTile(col, JumpGame.GROUND - 3)
+
+        tiles.setTileAt(
+            tiles.getTileLocation(col, JumpGame.GROUND - 2),
+            assets.image`JumpGameExit`,
+        )
+        tiles.setTileAt(
+            tiles.getTileLocation(col, JumpGame.GROUND - 1),
+            img`
+                7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+                6 6 7 6 7 6 7 6 6 d 6 7 7 6 7 7
+                d d 6 7 7 6 7 d d d 7 6 d 6 7 6
+                d d d d d d 6 d d d d d d d 6 d
+                d d d d d d d d d d d d d d d d
+                d 1 1 d 1 d d d d d 1 d d d d d
+                d 1 1 d d d d d d d d d d d d d
+                d d d d d d d d d d d d d d d d
+                d d d d d d d d d d d d d d d d
+                d d d d d d b d d d d d d d 1 d
+                d d d d d d d d d d d d d d d d
+                d d b d d d d d d d d b b d d d
+                d d d d d d d d d d d b b d d d
+                d d d d d d d d d d d d d d d d
+                d d d d d d d 1 d d d d d d d d
+                d d d d d d d d d d d d d d 1 d
+            `,
+        )
+        tiles.setTileAt(
+            tiles.getTileLocation(col, JumpGame.GROUND),
+            img`
+                d d d d d d d d d d d d d d d d
+                d d d 1 1 d d d d d d d d b d d
+                d d d 1 1 d d d d d d d d d d d
+                d d d d d d d d d d d d d d d d
+                d d b d d d d d d b b d d d d d
+                d d d d d d d d d b b d d d d d
+                d d d d d d d d d d d d d d d d
+                d d d d d d d d d d d d d d d d
+                d d d d d b d d d d d d d d d d
+                d d d d d d d d d d d d d d d d
+                d d d d d d d d d d d d d d d d
+                1 1 d d d d d d d d d d d d d d
+                1 1 d d d d d d d d d d b d d d
+                d d d d d d 1 d d d d d d d d d
+                d d d d d d d d d d d d d d d d
+                d d d d d d d d d d d d d d b d
+            `,
+        )
+        tiles.setTileAt(
+            tiles.getTileLocation(col, JumpGame.GROUND + 1),
+            img`
+                d d d d d d d d d d d d d d d d
+                d d d 1 1 d d d d d d d d b d d
+                d d d 1 1 d d d d d d d d d d d
+                d d d d d d d d d d d d d d d d
+                d d b d d d d d d b b d d d d d
+                d d d d d d d d d b b d d d d d
+                d d d d d d d d d d d d d d d d
+                d d d d d d d d d d d d d d d d
+                d d d d d b d d d d d d d d d d
+                d d d d d d d d d d d d d d d d
+                d d d d d d d d d d d d d d d d
+                1 1 d d d d d d d d d d d d d d
+                1 1 d d d d d d d d d d b d d d
+                d d d d d d 1 d d d d d d d d d
+                d d d d d d d d d d d d d d d d
+                d d d d d d d d d d d d d d b d
+            `,
+        )
+
+        tiles.setWallAt(
+            tiles.getTileLocation(col, JumpGame.GROUND - 2),
+            false,
+        )
+        tiles.setWallAt(
+            tiles.getTileLocation(col, JumpGame.GROUND - 1),
+            true,
+        )
+        tiles.setWallAt(
+            tiles.getTileLocation(col, JumpGame.GROUND),
+            true,
+        )
+        tiles.setWallAt(
+            tiles.getTileLocation(col, JumpGame.GROUND + 1),
+            true,
+        )
+    }
+    static setGround(col: number, row: number | null = null) {
+        if (row === null) {
+            row = JumpGame.GROUND
+        }
+
+        let i: number
+
+        for (i = JumpGame.GROUND + 1; i >= row + 1; --i) {
+            tiles.setTileAt(
+                tiles.getTileLocation(col, i),
+                img`
+                    d d d d d d d d d d d d d d d d
+                    d d d 1 1 d d d d d d d d b d d
+                    d d d 1 1 d d d d d d d d d d d
+                    d d d d d d d d d d d d d d d d
+                    d d b d d d d d d b b d d d d d
+                    d d d d d d d d d b b d d d d d
+                    d d d d d d d d d d d d d d d d
+                    d d d d d d d d d d d d d d d d
+                    d d d d d b d d d d d d d d d d
+                    d d d d d d d d d d d d d d d d
+                    d d d d d d d d d d d d d d d d
+                    1 1 d d d d d d d d d d d d d d
+                    1 1 d d d d d d d d d d b d d d
+                    d d d d d d 1 d d d d d d d d d
+                    d d d d d d d d d d d d d d d d
+                    d d d d d d d d d d d d d d b d
+                `,
+            )
+            tiles.setWallAt(
+                tiles.getTileLocation(col, i),
+                true,
+            )
+        }
+
+        tiles.setTileAt(
+            tiles.getTileLocation(col, i),
+            img`
+                7 7 7 7 7 7 7 7 7 7 7 7 7 7 7 7
+                6 6 7 6 7 6 7 6 6 d 6 7 7 6 7 7
+                d d 6 7 7 6 7 d d d 7 6 d 6 7 6
+                d d d d d d 6 d d d d d d d 6 d
+                d d d d d d d d d d d d d d d d
+                d 1 1 d 1 d d d d d 1 d d d d d
+                d 1 1 d d d d d d d d d d d d d
+                d d d d d d d d d d d d d d d d
+                d d d d d d d d d d d d d d d d
+                d d d d d d b d d d d d d d 1 d
+                d d d d d d d d d d d d d d d d
+                d d b d d d d d d d d b b d d d
+                d d d d d d d d d d d b b d d d
+                d d d d d d d d d d d d d d d d
+                d d d d d d d 1 d d d d d d d d
+                d d d d d d d d d d d d d d 1 d
+            `,
+        )
+        tiles.setWallAt(
+            tiles.getTileLocation(col, i),
+            true,
+        )
+        if (Math.percentChance(30)) {
+            tiles.setTileAt(
+                tiles.getTileLocation(col, i - 1),
+                img`
+                    . . . . . . . . . . 8 8 . . . .
+                    . . . 8 8 . . . . . 8 8 . . . .
+                    . . . 8 7 8 . . . 8 7 8 . . . .
+                    . . . 8 7 6 8 . 8 8 7 8 . . . .
+                    . . . 8 6 7 8 . 8 7 7 8 . . . .
+                    . . . 8 8 7 8 8 8 7 7 8 . . . .
+                    . . . 8 8 7 6 8 6 7 6 8 8 8 8 .
+                    8 8 . 8 8 7 7 8 7 7 8 8 6 7 8 .
+                    8 7 8 8 8 7 7 8 7 6 8 7 7 6 8 8
+                    8 6 7 6 8 6 7 6 7 6 6 7 6 8 8 8
+                    . 8 7 7 6 6 7 6 7 6 7 7 8 8 7 8
+                    . . 8 7 7 6 7 8 7 6 7 6 8 7 7 8
+                    . . . 8 7 6 7 8 6 6 7 8 6 7 8 .
+                    . . . 8 7 8 7 8 6 6 8 8 6 8 . .
+                    . . . 8 6 8 6 8 6 6 8 8 6 8 . .
+                    . . . 8 6 8 6 6 6 6 8 8 6 8 . .
+                `,
+            )
+        }
+
+        for (i = i - 1; i >= JumpGame.GROUND - 5; --i) {
+            JumpGame.removeTile(col, i)
+        }
+    }
+    static setHazard(col: number) {
+        JumpGame.removeTile(col, JumpGame.GROUND - 2)
+        JumpGame.removeTile(col, JumpGame.GROUND - 1)
+
+        tiles.setTileAt(
+            tiles.getTileLocation(col, JumpGame.GROUND),
+            Math.percentChance(50)
+                ? img`
+                5 5 4 2 2 2 2 2 4 2 2 2 2 4 4 5
+                5 4 2 2 2 2 2 4 4 4 4 4 4 4 5 5
+                4 2 2 4 2 4 4 4 5 5 5 5 5 5 4 4
+                2 2 2 2 4 4 5 5 4 4 4 5 4 5 4 4
+                4 4 2 4 4 5 5 4 4 2 2 4 5 4 4 2
+                4 4 2 4 5 4 4 2 2 2 2 4 5 4 4 2
+                2 2 4 5 4 4 2 2 2 4 4 2 5 5 4 2
+                4 4 5 5 4 2 2 2 2 4 4 2 4 5 5 4
+                5 5 5 4 2 2 4 2 2 2 2 2 4 5 5 5
+                4 5 4 4 2 2 2 2 2 2 2 2 4 5 4 4
+                4 5 5 2 2 4 2 2 2 4 2 2 4 5 5 4
+                5 5 4 2 4 2 4 2 2 2 2 4 5 5 5 5
+                4 5 5 4 2 4 2 2 2 2 2 4 5 4 4 4
+                4 5 5 5 2 2 2 4 4 4 5 5 5 4 2 2
+                4 5 5 4 5 5 5 5 5 5 5 4 4 2 2 2
+                4 5 5 4 4 4 4 4 4 4 4 2 2 2 4 4
+                ` : img`
+                    5 4 4 5 5 4 4 4 4 2 2 2 4 4 4 4
+                    4 4 4 4 4 5 5 4 2 2 2 2 4 4 4 5
+                    4 2 2 2 4 4 5 4 2 2 4 4 5 5 5 5
+                    2 2 4 2 4 4 5 4 2 2 4 5 5 5 5 4
+                    2 2 2 2 4 4 5 4 2 2 4 4 5 5 4 4
+                    4 2 2 2 4 5 5 4 4 4 4 4 4 4 4 2
+                    2 2 2 4 4 5 5 5 4 4 2 2 2 2 2 2
+                    4 2 2 4 5 5 5 5 4 2 2 4 2 2 2 4
+                    5 4 4 4 4 4 4 5 5 4 2 2 2 4 4 4
+                    4 4 4 2 2 2 4 4 5 5 4 4 4 4 5 5
+                    4 2 2 2 2 2 2 2 4 5 5 5 5 5 5 5
+                    5 4 4 2 4 2 2 4 4 5 5 5 4 4 4 5
+                    5 5 4 2 2 2 4 4 4 5 5 4 2 2 2 4
+                    4 5 4 4 4 4 5 5 5 5 4 2 4 2 2 4
+                    4 5 5 5 5 5 5 4 4 4 2 4 2 4 2 4
+                    4 5 5 5 4 4 4 4 2 2 2 2 4 2 4 4
+                `
+        )
+        tiles.setTileAt(
+            tiles.getTileLocation(col, JumpGame.GROUND + 1),
+            Math.percentChance(50)
+                ? img`
+                    5 5 4 2 2 2 2 2 4 2 2 2 2 4 4 5
+                    5 4 2 2 2 2 2 4 4 4 4 4 4 4 5 5
+                    4 2 2 4 2 4 4 4 5 5 5 5 5 5 4 4
+                    2 2 2 2 4 4 5 5 4 4 4 5 4 5 4 4
+                    4 4 2 4 4 5 5 4 4 2 2 4 5 4 4 2
+                    4 4 2 4 5 4 4 2 2 2 2 4 5 4 4 2
+                    2 2 4 5 4 4 2 2 2 4 4 2 5 5 4 2
+                    4 4 5 5 4 2 2 2 2 4 4 2 4 5 5 4
+                    5 5 5 4 2 2 4 2 2 2 2 2 4 5 5 5
+                    4 5 4 4 2 2 2 2 2 2 2 2 4 5 4 4
+                    4 5 5 2 2 4 2 2 2 4 2 2 4 5 5 4
+                    5 5 4 2 4 2 4 2 2 2 2 4 5 5 5 5
+                    4 5 5 4 2 4 2 2 2 2 2 4 5 4 4 4
+                    4 5 5 5 2 2 2 4 4 4 5 5 5 4 2 2
+                    4 5 5 4 5 5 5 5 5 5 5 4 4 2 2 2
+                    4 5 5 4 4 4 4 4 4 4 4 2 2 2 4 4
+                ` : img`
+                    5 4 4 5 5 4 4 4 4 2 2 2 4 4 4 4
+                    4 4 4 4 4 5 5 4 2 2 2 2 4 4 4 5
+                    4 2 2 2 4 4 5 4 2 2 4 4 5 5 5 5
+                    2 2 4 2 4 4 5 4 2 2 4 5 5 5 5 4
+                    2 2 2 2 4 4 5 4 2 2 4 4 5 5 4 4
+                    4 2 2 2 4 5 5 4 4 4 4 4 4 4 4 2
+                    2 2 2 4 4 5 5 5 4 4 2 2 2 2 2 2
+                    4 2 2 4 5 5 5 5 4 2 2 4 2 2 2 4
+                    5 4 4 4 4 4 4 5 5 4 2 2 2 4 4 4
+                    4 4 4 2 2 2 4 4 5 5 4 4 4 4 5 5
+                    4 2 2 2 2 2 2 2 4 5 5 5 5 5 5 5
+                    5 4 4 2 4 2 2 4 4 5 5 5 4 4 4 5
+                    5 5 4 2 2 2 4 4 4 5 5 4 2 2 2 4
+                    4 5 4 4 4 4 5 5 5 5 4 2 4 2 2 4
+                    4 5 5 5 5 5 5 4 4 4 2 4 2 4 2 4
+                    4 5 5 5 4 4 4 4 2 2 2 2 4 2 4 4
+                `
+        )
+
+        tiles.setWallAt(
+            tiles.getTileLocation(col, JumpGame.GROUND),
+            false,
+        )
+        tiles.setWallAt(
+            tiles.getTileLocation(col, JumpGame.GROUND + 1),
+            true,
+        )
+    }
+}
+
 class SatelliteSprite {
     static sprites: Sprite[] = []
     static numSatellites: number = 0
@@ -3425,6 +4655,7 @@ function resetSprites() {
         SpriteKind.DeusExMachinaCard,
         SpriteKind.BlueEyesWhiteDragonCard,
         SpriteKind.RecipeCard,
+        SpriteKind.JumpPlayer,
     ]) {
         sprites.destroyAllSpritesOfKind(kind)
     }
@@ -3617,7 +4848,7 @@ function enterMart() {
                 // issue: a bug
                 const awUgonDehhUgonGitKiww = sprites.create(assets.image`vTanRageFace`, SpriteKind.Dark)
                 awUgonDehhUgonGitKiww.setFlag(SpriteFlag.GhostThroughWalls, true)
-                awUgonDehhUgonGitKiww.setScale(2) // todo a
+                awUgonDehhUgonGitKiww.setScale(2)
                 tiles.placeOnTile(awUgonDehhUgonGitKiww, tiles.getTileLocation(12, 19))
                 const followSpeed = moveSpeed / 1.5
                 awUgonDehhUgonGitKiww.follow(voluntold, followSpeed)
@@ -3743,7 +4974,51 @@ function trySetPet() {
         return
     }
 
-    pet = sprites.create(assets.image`luckyCat`, SpriteKind.Companion)
+    let image: Image = assets.image`luckyCat`
+
+    // link: crown pixel art
+    // - url
+    //   - <https://www.vecteezy.com/vector-art/25560519-crown-pixel-8-bit-isolated-on-white-background>
+    //   - <https://www.shutterstock.com/image-vector/medieval-crown-pixel-art-set-golden-2184560679>
+    //   - <https://www.dreamstime.com/crown-pixel-art-icon-pixel-illustration-crown-pixel-art-icon-pixel-color-illustration-image183751092>
+    //   - <https://www.vecteezy.com/vector-art/4829248-crown-collection-in-pixel-art-style>
+    //   - <https://www.pinterest.com/pin/pixel-art-crown--516014069784983746/>
+    //   - <https://www.freepik.com/premium-vector/pixel-art-king-crown-icon-bit-game_11812813.htm>
+    // - retrieved: 2024_08_23
+
+    switch (companionType) {
+    case Companion.LUCKY_CAT:
+        image = assets.image`luckyCat`
+        break
+    case Companion.KING_SHARK:
+        image = assets.image`kingShark`
+        break
+    case Companion.KPOP_STAN:
+        image = img`
+            . f f f . f f f f . f f f .
+            f f f f f c c c c f f f f f
+            f f f f b c c c c b f f f f
+            f f f c 3 c c c c 3 c f f f
+            . f 3 3 c c c c c c 3 3 f .
+            . f c c c c 4 4 c c c c f .
+            . f f c c 4 4 4 4 c c f f .
+            . f f f b f 4 4 f b f f f .
+            . f f 4 1 f d d f 1 4 f f .
+            . . f f d d d d d d f f . .
+            . . e f e 4 4 4 4 e f e . .
+            . e 4 f b 3 3 3 3 b f 4 e .
+            . 4 d f 3 3 3 3 3 3 c d 4 .
+            . 4 4 f 6 6 6 6 6 6 f 4 4 .
+            . . . . f f f f f f . . . .
+            . . . . f f . . f f . . . .
+        `
+        break
+    default:
+        image = assets.image`luckyCat`
+        break
+    }
+
+    pet = sprites.create(image, SpriteKind.Companion)
     pet.setFlag(SpriteFlag.GhostThroughTiles, true)
     pet.setFlag(SpriteFlag.GhostThroughWalls, true)
     tiles.placeOnTile(
@@ -3753,12 +5028,27 @@ function trySetPet() {
             voluntold.tilemapLocation().row + (randint(0, 1) * 2 - 1)
         )
     )
-    animation.runImageAnimation(
-        pet,
-        assets.animation`luckyCatJump`,
-        50,
-        true
-    )
+
+    switch (companionType) {
+    case Companion.LUCKY_CAT:
+        animation.runImageAnimation(
+            pet,
+            assets.animation`luckyCatJump`,
+            50,
+            true
+        )
+
+        break
+    case Companion.KING_SHARK:
+        animation.runImageAnimation(
+            pet,
+            assets.animation`kingSharkJump`,
+            50,
+            true
+        )
+
+        break
+    }
 }
 function newExit(col: number, row: number) {
     const exitKind = SpriteKind.create()
@@ -5583,6 +6873,37 @@ function enterHumbleHome(col: number = 10, row: number = 2) {
     sprite = sprites.create(assets.image`toilet15x22`, SpriteKind.ToiletDisposal)
     tiles.placeOnTile(sprite, tiles.getTileLocation(1, 10))
 
+    sprite = sprites.create(img`
+        ........................
+        ........................
+        ........................
+        ........................
+        ..........fffff.........
+        ........ff11111f........
+        .......fb111111bf.......
+        ......fbd1111111f.......
+        ......fddd111111df......
+        ......fdddd11111df......
+        ......fddddddd11df......
+        ......fddddddd111f......
+        ......fddddddcf11f......
+        .......fbdddb1111bf.....
+        ........fffcfdb1b1f.....
+        .......ffffffffbfbf.....
+        ....ff.fffffffffff......
+        .....ffffffff...........
+        .....ffffffb1b1f........
+        ......ffffffbfbf........
+        ........................
+        ........................
+        ........................
+        ........................
+    `, SpriteKind.JumpPlayer)
+    tiles.placeOnTile(sprite, tiles.getTileLocation(11, 14))
+
+    sprite = sprites.create(assets.image`crtWithStandProfile`, SpriteKind.Neutral)
+    tiles.placeOnTile(sprite, tiles.getTileLocation(14, 14))
+
     const powerup = sprites.create(assets.image`hater-ade`, SpriteKind.MagicGrease)
     tiles.placeOnTile(powerup, tiles.getTileLocation(1, 1))
     animation.runMovementAnimation(
@@ -6643,6 +7964,46 @@ sprites.onDestroyed(SpriteKind.FakePlayer, function (sprite) {
     decoyExists = false
 })
 
+sprites.onOverlap(SpriteKind.Player, SpriteKind.JumpPlayer, function (sprite, otherSprite) {
+    if (companionState < 2) {
+        return
+    }
+
+    const loc = otherSprite.tilemapLocation()
+    const placeHere = tiles.getTileLocation(loc.col, loc.row - 1)
+
+    tiles.placeOnTile(sprite, placeHere)
+
+    if (!game.ask("Want to play 'Jump the Shark'?")) {
+        return
+    }
+
+    voluntold.destroy()
+    pet.destroy()
+    resetSprites()
+
+    JumpGame.start(
+        onAButtonPressed,
+        onBButtonPressed,
+        up, down, left, right,
+        countdownEnd,
+        lifeZero,
+        (w, s, h) => {
+            if (w) {
+                companionType = Companion.KING_SHARK
+            }
+
+            enterHumbleHome(placeHere.col, placeHere.row)
+
+            if (w) {
+                timer.after(100, () => {
+                    music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.InBackground)
+                    sayLongText("Your companion turned into King Shark!")
+                })
+            }
+        },
+    )
+})
 sprites.onOverlap(SpriteKind.Player, SpriteKind.RecipeCard, function (sprite, otherSprite) {
     sprites.destroyAllSpritesOfKind(SpriteKind.RecipeCard)
     music.play(music.createSong(assets.song`linksAwakeningPowerupGet`), music.PlaybackMode.UntilDone)
@@ -8635,11 +9996,7 @@ sprites.onOverlap(SpriteKind.Companion, SpriteKind.Antisocial, function (sprite,
     pushFetchList(sprites.create(assets.image`busCard`, SpriteKind.TransitCard))
 })
 
-info.onLifeZero(function () {
-    info.setScore(0)
-    game.gameOver(false)
-})
-info.onCountdownEnd(function () {
+function countdownEnd() {
     switch (countdownType) {
         case 1:
             music.stopAllSounds()
@@ -8751,7 +10108,14 @@ info.onCountdownEnd(function () {
         default:
             break
     }
-})
+}
+function lifeZero() {
+    info.setScore(0)
+    game.gameOver(false)
+}
+
+info.onLifeZero(lifeZero)
+info.onCountdownEnd(countdownEnd)
 
 const entrances = [
     enterHomeOfBox,
@@ -8784,6 +10148,7 @@ let voluntold: Sprite = null
 let stalker: Sprite = null
 let startingTile: Sprite = null
 let face: Sprite = null
+let companionFace: Image = null
 let cauldron: Sprite = null
 let pet: Sprite = null
 let skillTrader: Sprite = null
@@ -8809,6 +10174,7 @@ let companionState: number = 0
 let fetchState: number = 0
 let minSpeed: number = 0
 let maxSpeed: number = 0
+let companionType: number = Companion.LUCKY_CAT
 
 face = sprites.create(assets.image`voluntoldBetterModel`, SpriteKind.Invulnerable)
 tiles.placeOnTile(face, tiles.getTileLocation(0, 0))
@@ -8968,7 +10334,7 @@ game.onUpdateInterval(1000, function () {
             ),
             +enemiesCanMove
                 * (randint(minSpeed, maxSpeed)
-                - (companionState === 2 && value.overlapsWith(pet) ? 3 : 0))
+                - (companionState === 2 && pet !== null && value.overlapsWith(pet) ? 3 : 0))
                 / (sprites.readDataNumber(value, "slowing") + 1),
         )
     }
