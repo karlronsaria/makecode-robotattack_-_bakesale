@@ -91,7 +91,7 @@ namespace SpriteKind {
 // Shield and slowing should have negative synergy
 // */
 
-const advice = [
+const advice: string[][] = [
     [
         "The skill trader is also an avid animal enthusiast on the side.",
         "She claims she can work with ANY animal she meets.",
@@ -305,7 +305,7 @@ function jail(col: number, row: number) {
         SpriteKind.Neutral,
     )
 
-    let loc = tiles.getTileLocation(col, row)
+    const loc = tiles.getTileLocation(col, row)
     tiles.placeOnTile(rug, loc)
 
     tiles.placeOnTile(
@@ -316,7 +316,7 @@ function jail(col: number, row: number) {
     voluntold.x += 8
     tiles.placeOnTile(jail, loc)
 
-    for (let pair of [
+    for (const pair of [
         [col, row - 1],
         [col + 1, row - 1],
         [col + 2, row],
@@ -398,10 +398,10 @@ function jail(col: number, row: number) {
 function cloneAdvice(list: string[][]): string[][] {
     let newList: string[][] = []
 
-    for (let est of list) {
+    for (const est of list) {
         let temp = []
 
-        for (let uan of est) {
+        for (const uan of est) {
             temp.push(uan)
         }
 
@@ -430,8 +430,7 @@ function shopAdvice(sprite: Sprite) {
         return
     }
 
-    info.changeScoreBy(-itemCost)
-    sprite.sayText(`-$${itemCost}`, 500, false)
+    takeMaterialCost()
 
     timer.after(250, function () {
         sayLongText("Alright, a word of advice:")
@@ -1314,12 +1313,12 @@ const Magic = {
     ICING: 2,
     VANILLA: 3,
     FLOUR: 4,
-    SUGAR: 5,
-    FECES: 6,
-    POWDER: 7,
-    COCOA: 8,
-    LEMON: 9,
-    GILDING: 10,
+    GILDING: 5,
+    SUGAR: 6,
+    FECES: 7,
+    POWDER: 8,
+    COCOA: 9,
+    LEMON: 10,
     MARGARINE: 11,
     DMCA_TAKEDOWN_NOTICE: 12,
     MISSINGNO: 13,
@@ -1404,6 +1403,14 @@ const ingredience = [
         chance: 80,
     },
     {
+        name: `magicGilding`,
+        prettyname: "magic gilding",
+        image: assets.image`magicGilding`,
+        price: 3000,
+        num: 1,
+        chance: 5,
+    },
+    {
         name: `magicSugar`,
         prettyname: "magic sugar",
         image: assets.image`magicSugar`,
@@ -1442,14 +1449,6 @@ const ingredience = [
         price: 35,
         num: 1,
         chance: 20,
-    },
-    {
-        name: `magicGilding`,
-        prettyname: "magic gilding",
-        image: assets.image`magicGilding`,
-        price: 3000,
-        num: 1,
-        chance: 5,
     },
     {
         name: `magicMargarine`,
@@ -1576,11 +1575,8 @@ function time_sequence(seq: any[][]) {
     let sequencer = new After()
 
     for (let i = seq.length - 1; i >= 0; --i) {
-        let what: number = seq[i][0]
-        let the: () => void = seq[i][1]
-
         sequencer = sequencer.before_then(
-            what, the,
+            seq[i][0], seq[i][1],
         )
     }
 
@@ -2008,7 +2004,7 @@ class KitchenGame {
     static stop() {
         KitchenGame.stopIntervals()
 
-        for (let kind of [
+        for (const kind of [
             KitchenGame.Oven,
             KitchenGame.Processor,
             KitchenGame.Mixer,
@@ -2031,7 +2027,7 @@ class KitchenGame {
         tiles.setCurrentTilemap(tilemap`kitchen`)
         KitchenGame.newConveyorBelt(2, 6, 1, 100)
 
-        let wires = sprites.create(
+        const wires = sprites.create(
             assets.image`wires`,
             SpriteKind.Neutral,
         )
@@ -2405,9 +2401,9 @@ class KitchenGame {
 }
 
 class SatelliteSprite {
-    static numSatellites = 0
-    static nextAngle = 0
     static sprites: Sprite[] = []
+    static numSatellites: number = 0
+    static nextAngle: number = 0
     static radius: number = 0
     static max: number = 1
     static interval: number = 50
@@ -2471,7 +2467,7 @@ class SatelliteSprite {
         sprites.setDataNumber(
             satellite,
             "nextRadius",
-            0
+            0,
         )
 
         const intervalId = setInterval(
@@ -2704,7 +2700,11 @@ class CutsceneLagPolice {
         return CutsceneLagPolice.sequence_running
     }
 
-    static knockBackX(sprite: Sprite, velocity: number, time: number) {
+    static knockBackX(
+        sprite: Sprite,
+        velocity: number,
+        time: number,
+    ) {
         scene.cameraShake(8, 200)
         music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground)
         sprite.vx = velocity
@@ -2951,7 +2951,7 @@ class CutsceneLagPolice {
             [500, () => {
                 sanne.vy = 100
                 sanne.sayText(script[4], 500, false)
-                timer.after(200, function () {
+                timer.after(200, () => {
                     sanne.vy = 0
                     sanne.setImage(assets.image`sanneRight`)
                 })
@@ -3020,7 +3020,7 @@ function freeze() {
     controller.moveSprite(voluntold, 0, 0)
     enemiesCanMove = false
 
-    for (let sprite of sprites.allOfKind(SpriteKind.Dark)) {
+    for (const sprite of sprites.allOfKind(SpriteKind.Dark)) {
         sprite.follow(null)
     }
 }
@@ -3134,46 +3134,37 @@ function endRage() {
     face.setImage(
         forcedToEatStartingTile === 2
             ? assets.image`justALittleSick`
-            : img`
-            . . . . . . 5 . . 5 . . . . . . 
-            . . . . . f 5 5 5 5 f . . . . . 
-            . . . . f 1 5 2 2 5 1 f . . . . 
-            . . . f 1 6 6 6 6 6 6 1 f . . . 
-            . . . f 6 6 f f f f 6 6 f . . . 
-            . . . f 6 f f d d f f 6 f . . . 
-            . . f 6 f d f d d f d f 6 f . . 
-            . . f 6 f d 3 d d 3 d f 6 f . . 
-            . . f 6 6 f d d d d f 6 6 f . . 
-            . f 6 6 f 3 f f f f 3 f 6 6 f . 
-            . . f f d 3 5 3 3 5 3 d f f . . 
-            . . f d d f 3 5 5 3 f d d f . . 
-            . . . f f 3 3 3 3 3 3 f f . . . 
-            . . . f 3 3 5 3 3 5 3 3 f . . . 
-            . . . f f f f f f f f f f . . . 
-            . . . . . f f . . f f . . . . . 
-            `
+            : assets.image`voluntoldBetterModel`
     )
 }
 function knockBack(): number {
     const temp: number = 3
-    controller.moveSprite(voluntold, 0, 0)
+    const waitTime = 1000 * 8 / (temp * moveSpeed)
+
+    let vx: number = 0
+    let vy: number = 0
 
     switch (direction) {
         case 0:
-            voluntold.setVelocity(temp * -moveSpeed, 0)
+            vx = temp * -moveSpeed
+            vy = 0
             break
         case 1:
-            voluntold.setVelocity(0, temp * moveSpeed)
+            vx = 0
+            vy = temp * moveSpeed
             break
         case 2:
-            voluntold.setVelocity(temp * moveSpeed, 0)
+            vx = temp * moveSpeed
+            vy = 0
             break
         case 3:
-            voluntold.setVelocity(0, temp * -moveSpeed)
+            vx = 0
+            vy = temp * -moveSpeed
             break
     }
 
-    const waitTime = 1000 * 8 / (temp * moveSpeed)
+    controller.moveSprite(voluntold, 0, 0)
+    voluntold.setVelocity(vx, vy)
 
     timer.after(waitTime, function () {
         voluntold.setVelocity(0, 0)
@@ -3203,9 +3194,11 @@ function getGameTimeByValue(value: number): number {
     return (value - 4000) * 39 / 3995 + 40
 }
 function startIdleMove(sprite: Sprite) {
+    const speed: number = 35
+    const direction: number = randint(0, 3)
+
     let vx: number = 0
     let vy: number = 0
-    const direction: number = randint(0, 3)
 
     switch (direction) {
         case 0:
@@ -3226,7 +3219,7 @@ function startIdleMove(sprite: Sprite) {
             break
     }
 
-    sprite.setVelocity(vx * 35, vy * 35)
+    sprite.setVelocity(vx * speed, vy * speed)
 
     sprite.setImage(
         spriteData[sprites.readDataNumber(sprite, "type")]
@@ -3270,7 +3263,7 @@ function nearestSprite(sprite: Sprite, kind: number) {
     let nearestSprite: Sprite = sprite
     let temp: number
 
-    for (let value of sprites.allOfKind(kind)) {
+    for (const value of sprites.allOfKind(kind)) {
         temp = spriteSquareDistance(sprite, value)
 
         if (temp < shortestDistance) {
@@ -3476,7 +3469,6 @@ function setAvailableIngredience() {
     cart = []
 
     for (let index = 0; index < ingredience.length; ++index) {
-        const item = ingredience[index]
         cart.push(0)
 
         if (inventory.length < ingredience.length) {
@@ -3497,10 +3489,8 @@ function setAvailableIngredience() {
 
                 break
         }
-
-        if (hasAcceptedCharge && item.name === `magicDmcaTakedownNotice`) {
-            continue
-        }
+        
+        const item = ingredience[index]
 
         for (let inst = 0; inst < item.num; ++inst) {
             if (Math.percentChance(item.chance)) {
@@ -3579,27 +3569,22 @@ function enterMart() {
     setPlayer()
     placePlayer(tiles.getTileLocation(74, 7))
 
-    timer.after(100, function () {
+    timer.after(100, () => {
         eventBasedMusic = true
         music.stopAllSounds()
 
-        if (hasAcceptedCharge) {
-            pause(18000)
-            return
-        }
-
-        if (inMart)
+        if (inMart && !hasAcceptedCharge)
             music.play(music.createSong(assets.song`dopicTown1`), music.PlaybackMode.InBackground)
 
         pause(2000)
 
-        if (inMart)
+        if (inMart && !hasAcceptedCharge)
             music.play(music.createSong(assets.song`dopicTown2`), music.PlaybackMode.LoopingInBackground)
 
         pause(4000)
         music.stopAllSounds()
 
-        if (inMart)
+        if (inMart && !hasAcceptedCharge)
             music.play(music.createSong(assets.song`dopicTown3`), music.PlaybackMode.LoopingInBackground)
 
         let countdown = 12 * randint(1, 4)
@@ -3623,7 +3608,9 @@ function enterMart() {
                     return
                 }
 
-                music.play(music.createSong(assets.song`dopicTown4`), music.PlaybackMode.LoopingInBackground)
+                if (!hasAcceptedCharge)
+                    music.play(music.createSong(assets.song`dopicTown4`), music.PlaybackMode.LoopingInBackground)
+
                 countdownType = 0
                 info.startCountdown(10)
 
@@ -4235,7 +4222,7 @@ function setWindowShoppers(num: number, tile: Image) {
     }
 }
 function enemySay(text: string) {
-    for (let value of sprites.allOfKind(SpriteKind.Enemy)) {
+    for (const value of sprites.allOfKind(SpriteKind.Enemy)) {
         value.sayText(text)
     }
 }
@@ -4461,7 +4448,7 @@ function enterConfectionersHome() {
         tiles.placeOnTile(sphereOfRedundancy, tiles.getTileLocation(9, 14))
     }
     if (hasKey) {
-        for (let value of tiles.getTilesByType(sprites.dungeon.doorLockedNorth)) {
+        for (const value of tiles.getTilesByType(sprites.dungeon.doorLockedNorth)) {
             tiles.setWallAt(value, false)
         }
     }
@@ -4493,7 +4480,7 @@ function displayIngredient(index: number, col: number, row: number) {
         return
     }
 
-    let sprite = sprites.create(
+    const sprite = sprites.create(
         ingredience[index].image,
         SpriteKind.MagicIngredience,
     )
@@ -5037,7 +5024,7 @@ function enterBasement(col: number = 7, row: number = 9) {
         mixer,
     ]
 
-    for (let sprite of KitchenGame.newConveyorBelt(2, 6, 1, 100)) {
+    for (const sprite of KitchenGame.newConveyorBelt(2, 6, 1, 100)) {
         animatedEnvironment.push(sprite)
     }
 
@@ -5240,7 +5227,7 @@ function setIntro() {
     goalSprite = sprites.create(assets.image`employerFront`, SpriteKind.Employer)
     goalSprite.setPosition(80, 30)
 
-    for (let value of [
+    for (const value of [
         "Make money!",
         "Sell cookies with 'A'!",
         "Only then",
@@ -5305,7 +5292,7 @@ function getGiantCookiePowerup() {
     newCountdown(15, 1)
 }
 function deactivateTopFloorWalls() {
-    for (let cat of [
+    for (const cat of [
         sprites.dungeon.purpleOuterSouth1,
         sprites.dungeon.purpleOuterNorth1,
         sprites.dungeon.purpleOuterEast1,
@@ -5319,7 +5306,7 @@ function deactivateTopFloorWalls() {
         sprites.dungeon.purpleInnerNorthEast,
         sprites.dungeon.purpleInnerNorthWest,
     ]) {
-        for (let value of tiles.getTilesByType(cat)) {
+        for (const value of tiles.getTilesByType(cat)) {
             tiles.setWallAt(value, false)
         }
     }
@@ -5710,7 +5697,7 @@ function newConfection(i: number = 0): Sprite {
     return cookie
 }
 
-function makeMaterialsPurchase() {
+function takeMaterialCost() {
     loseMoney(itemCost)
     music.play(music.melodyPlayable(music.pewPew), music.PlaybackMode.InBackground)
 }
@@ -5753,7 +5740,7 @@ function onAButtonPressed() {
             recipe.speed,
             recipe.shield * 10,
         )) {
-            makeMaterialsPurchase()
+            takeMaterialCost()
         }
 
         return
@@ -5763,7 +5750,7 @@ function onAButtonPressed() {
         newConfection(i)
     }
 
-    makeMaterialsPurchase()
+    takeMaterialCost()
 
     // todo
     if (sprites.allOfKind(SpriteKind.Food).length > 200) {
@@ -5930,7 +5917,7 @@ scene.onHitWall(SpriteKind.Player, function (sprite, location) {
         timer.after(1000, function () {
             music.play(music.melodyPlayable(music.baDing), music.PlaybackMode.InBackground)
 
-            for (let tile of tiles.getTilesByType(sprites.dungeon.stairNorth)) {
+            for (const tile of tiles.getTilesByType(sprites.dungeon.stairNorth)) {
                 tiles.setWallAt(tile, false)
             }
 
@@ -7026,7 +7013,7 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Managerial, function (sprite, ot
     enemiesCanMove = true
 })
 
-let recipePlacement = [
+const recipePlacement = [
     [12, 4],
     [2, 2],
     [4, 2],
@@ -7044,13 +7031,13 @@ let recipePlacement = [
 
 sprites.onOverlap(SpriteKind.Player, SpriteKind.MagicIngredience, function (sprite, otherSprite) {
     if (inRecipeSelect) {
-        let tempSprite = sprites.create(
+        const tempSprite = sprites.create(
             otherSprite.image,
             SpriteKind.Neutral
         )
 
-        let index = sprites.readDataNumber(otherSprite, "type")
-        let pair = recipePlacement[index]
+        const index = sprites.readDataNumber(otherSprite, "type")
+        const pair = recipePlacement[index]
 
         tiles.placeOnTile(tempSprite, tiles.getTileLocation(pair[0], pair[1]))
         tiles.placeOnRandomTile(voluntold, assets.tile`greenEventTile0`)
@@ -7074,7 +7061,7 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.MagicIngredience, function (spri
 
     music.play(music.melodyPlayable(music.magicWand), music.PlaybackMode.InBackground)
 
-    let needle = availIngredience.find((o, i): boolean => {
+    const needle = availIngredience.find((o, i): boolean => {
         return o.image.equals(otherSprite.image)
     })
 
@@ -7162,7 +7149,7 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.ForbiddenPotable, function (spri
         : consumeHaterade)(otherSprite)
 })
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Professional, function (sprite, otherSprite) {
-    let placeMeHere = tiles.getTileLocation(otherSprite.tilemapLocation().column, otherSprite.tilemapLocation().row + 2)
+    const placeMeHere = tiles.getTileLocation(otherSprite.tilemapLocation().column, otherSprite.tilemapLocation().row + 2)
 
     if (hasConfectioneryMastery) {
         sayLongText("Go quickly. You're being followed.", assets.image`witchGhost`)
@@ -8766,7 +8753,7 @@ info.onCountdownEnd(function () {
     }
 })
 
-let entrances = [
+const entrances = [
     enterHomeOfBox,
     enterConfectionersHome,
     enterSomewhere,
@@ -8788,7 +8775,6 @@ let paths: tiles.Location[][] = []
 let availIngredience: image_number_pair[] = []
 let cart: number[] = []
 let inventory: number[] = []
-let direction: number = 3
 
 let headOfSales: Sprite = null
 let decoy: Sprite = null
@@ -8807,21 +8793,22 @@ let delegate: Sprite = null
 let manager: Sprite = null
 let terminal: Sprite = null
 
-let moveSpeed = 0
-let enterRow = 0
-let enterCol = 0
-let startRow = 0
-let startCol = 0
-let arghAWall = 0
-let leaveAttempts = 0
-let countdownType = 0
-let skillNum = 0
-let itemCost = 0
-let forcedToEatStartingTile = 0
-let companionState = 0
-let fetchState = 0
-let minSpeed = 0
-let maxSpeed = 0
+let direction: number = 3
+let moveSpeed: number = 0
+let enterRow: number = 0
+let enterCol: number = 0
+let startRow: number = 0
+let startCol: number = 0
+let arghAWall: number = 0
+let leaveAttempts: number = 0
+let countdownType: number = 0
+let skillNum: number = 0
+let itemCost: number = 0
+let forcedToEatStartingTile: number = 0
+let companionState: number = 0
+let fetchState: number = 0
+let minSpeed: number = 0
+let maxSpeed: number = 0
 
 face = sprites.create(assets.image`voluntoldBetterModel`, SpriteKind.Invulnerable)
 tiles.placeOnTile(face, tiles.getTileLocation(0, 0))
@@ -8905,7 +8892,7 @@ game.onUpdateInterval(250, function () {
     let h: tiles.Location = voluntold.tilemapLocation()
 
     if (fetchState === 0) {
-        for (let value of fetchable.concat(sprites.allOfKind(SpriteKind.Goal))) {
+        for (const value of fetchable.concat(sprites.allOfKind(SpriteKind.Goal))) {
             if (tileSquareDistance(h, value.tilemapLocation()) > 4) {
                 fetchState = 1
                 pet.follow(value, 2 * moveSpeed)
@@ -8956,40 +8943,42 @@ game.onUpdateInterval(5000, function () {
 
     timer.after(randint(1, 3) * 1000, function () {
         if (Math.percentChance(1)) {
-            for (let value of sprites.allOfKind(SpriteKind.Lucky)) {
+            for (const value of sprites.allOfKind(SpriteKind.Lucky)) {
                 value.sayText("lol I'm a cat", 500, false)
             }
         }
     })
 })
 game.onUpdateInterval(1000, function () {
-    for (let value of sprites.allOfKind(SpriteKind.Enemy)) {
+    for (const value of sprites.allOfKind(SpriteKind.Enemy)) {
         if (enraged) {
             value.setVelocity(
                 +enemiesCanMove * (randint(0, 1) * 2 - 1) * randint(50, 100),
                 +enemiesCanMove * (randint(0, 1) * 2 - 1) * randint(50, 100),
             )
-        } else {
-            scene.followPath(
-                value,
-                scene.aStar(
-                    value.tilemapLocation(),
-                    (decoyExists ? decoy : voluntold).tilemapLocation(),
-                ),
-                +enemiesCanMove
-                    * (randint(minSpeed, maxSpeed)
-                    - (companionState === 2 && value.overlapsWith(pet) ? 3 : 0))
-                    / (sprites.readDataNumber(value, "slowing") + 1),
-            )
-        }
-    }
 
-    for (let value of sprites.allOfKind(SpriteKind.BeetrootEnjoyer)) {
+            continue
+        }
+
         scene.followPath(
             value,
             scene.aStar(
                 value.tilemapLocation(),
-                voluntold.tilemapLocation()
+                (decoyExists ? decoy : voluntold).tilemapLocation(),
+            ),
+            +enemiesCanMove
+                * (randint(minSpeed, maxSpeed)
+                - (companionState === 2 && value.overlapsWith(pet) ? 3 : 0))
+                / (sprites.readDataNumber(value, "slowing") + 1),
+        )
+    }
+
+    for (const value of sprites.allOfKind(SpriteKind.BeetrootEnjoyer)) {
+        scene.followPath(
+            value,
+            scene.aStar(
+                value.tilemapLocation(),
+                voluntold.tilemapLocation(),
             ),
             +enemiesCanMove * 0.85 * moveSpeed,
         )
@@ -9000,24 +8989,24 @@ game.onUpdateInterval(1000, function () {
     }
 
     if (giantCookiePowerup) {
-        for (let value of sprites.allOfKind(SpriteKind.Food)) {
+        for (const value of sprites.allOfKind(SpriteKind.Food)) {
             value.sayText(Math.floor(value.lifespan / 1000))
         }
     }
 })
 game.onUpdateInterval(2000, function () {
     if (inBasement) {
-        let tempSprite = sprites.create(
+        const sprite = sprites.create(
             assets.image`ingredience`,
             SpriteKind.Neutral
         )
 
-        tiles.placeOnTile(tempSprite, tiles.getTileLocation(2, 1))
-        tempSprite.vx = 25
-        tempSprite.lifespan = 3750
+        tiles.placeOnTile(sprite, tiles.getTileLocation(2, 1))
+        sprite.vx = 25
+        sprite.lifespan = 3750
     }
 
-    for (let sprite of sprites.allOfKind(SpriteKind.Idling)) {
+    for (const sprite of sprites.allOfKind(SpriteKind.Idling)) {
         if (Math.percentChance(40)) {
             startIdleMove(sprite)
         }
