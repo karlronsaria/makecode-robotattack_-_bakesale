@@ -4676,6 +4676,44 @@ ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
 . . . f 3 3 3 3 3 3 3 3 f . . . 
 . . . . f f f f f f f f . . . . 
 `;
+            case "image145":
+            case "missingno":return img`
+. . . . . . . 1 f 1 f 1 c 4 . . 
+. . . . . f f c c c c 4 1 1 . . 
+. . . . . . f 4 f 4 f 1 4 4 . . 
+. . . . . f 3 c c c c 4 c c . . 
+. . . . . f f c c c 1 f f f . . 
+. . . . f 3 3 f 3 f f 1 c c . . 
+. . . f f 1 3 c 4 4 3 c c c . . 
+. . . f 1 f 1 4 f c 4 4 f 1 . . 
+. . . f 1 f 1 c 1 f f f 4 c . . 
+. . c c 1 1 f c c c c c f 1 . . 
+. . c c c c 3 c 3 c 3 c f c . . 
+. f 4 4 1 4 1 1 c 4 4 c 3 f . . 
+. f c c c c 4 c f f c 3 c f . . 
+. . c c c f f 1 c c 4 f f c . . 
+. . c c 1 c c 1 c c c c 4 c . . 
+. . . . . . . . . . . . . . . . 
+`;
+            case "image146":
+            case "managerGlitched":return img`
+. . . . f f . 1 . 1 . f 
+. . f f e d . f . f . f 
+. f f e e b . d . e . . 
+f f f f 4 4 . 4 . f . . 
+f f f 4 4 8 . 8 . f . e 
+f f f 4 4 5 . 8 . f . 4 
+f 4 f f f 8 f 8 f f . 4 
+f f 1 1 1 f e f e . f . 
+f e f f f . e f f . f . 
+. f e d d . e . f . f . 
+. f f e 4 . e 8 e 8 f 4 
+e e f e 5 f 4 f 1 f f . 
+4 e f e 8 f f . f . e . 
+4 e . e f f d f d . f . 
+. 4 . e f f b f e . f . 
+. 4 . e . f 4 f 8 . 4 . 
+`;
         }
         return null;
     })

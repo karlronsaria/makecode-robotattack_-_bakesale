@@ -155,7 +155,7 @@ const advice = [
 ]
 
 type recipe_t = {
-    poisoned: boolean,
+    poisoned: boolean
 
     // beetroot
     //   red frame
@@ -257,7 +257,8 @@ let recipe: recipe_t = {
 //     turn companion into shark
 // find the k-pop hater
 //     turn companion into k-pop stan
-// police arrests
+// redesign Magic Mart tilemap
+// [x] police arrests
 //     [x] lag police
 //     [x] assault and battery for using feces in recipe
 //     [x] consider adding gbj
@@ -293,7 +294,6 @@ function jail(col: number, row: number) {
 
     voluntold.destroy()
     setPlayer()
-
     canTurn = true
     talking = false
     nearsighted = false
@@ -382,7 +382,16 @@ function jail(col: number, row: number) {
             jail.sayText(":|", 10000, false)
         }],
         [20000, () => {
-            jail.sayText("Look, you're not getting your game back.", 10000, false)
+            jail.sayText("Look. You're softlocked. Okay?")
+        }],
+        [1000, () => {
+            jail.sayText("You're not getting your game back.", 10000, false)
+        }],
+        [20000, () => {
+            jail.sayText("Shoutout to Simpleflips", 10000, false)
+        }],
+        [20000, () => {
+            jail.sayText("Don't put feces in your cookies.", 10000, false)
         }],
     ])
 }
@@ -1313,6 +1322,7 @@ const Magic = {
     GILDING: 10,
     MARGARINE: 11,
     DMCA_TAKEDOWN_NOTICE: 12,
+    MISSINGNO: 13,
 }
 
 const RecipeColor = {
@@ -1457,6 +1467,14 @@ const ingredience = [
         num: 1,
         chance: 10,
     },
+    {
+        name: `missingno`,
+        prettyname: "Tooltip missing!",
+        image: assets.image`missingno`,
+        price: 400000,
+        num: 1,
+        chance: 100,
+    }
 ]
 
 type spriteData_t = {
@@ -1558,8 +1576,11 @@ function time_sequence(seq: any[][]) {
     let sequencer = new After()
 
     for (let i = seq.length - 1; i >= 0; --i) {
+        let what: number = seq[i][0]
+        let the: () => void = seq[i][1]
+
         sequencer = sequencer.before_then(
-            seq[i][0], seq[i][1],
+            what, the,
         )
     }
 
@@ -3182,11 +3203,11 @@ function getGameTimeByValue(value: number): number {
     return (value - 4000) * 39 / 3995 + 40
 }
 function startIdleMove(sprite: Sprite) {
-    let vx = 0
-    let vy = 0
-    const temp = randint(0, 3)
+    let vx: number = 0
+    let vy: number = 0
+    const direction: number = randint(0, 3)
 
-    switch (temp) {
+    switch (direction) {
         case 0:
             vx = 1
             vy = 0
@@ -3209,7 +3230,7 @@ function startIdleMove(sprite: Sprite) {
 
     sprite.setImage(
         spriteData[sprites.readDataNumber(sprite, "type")]
-            .directions[temp]
+            .directions[direction]
     )
 
     timer.after(1500, function () {
@@ -3219,10 +3240,21 @@ function startIdleMove(sprite: Sprite) {
 function getTotal(cart: number[]): number {
     return cart.reduce((acc, v) => acc + v, 0)
 }
-function addToTotal(item: any, index: number, balance: number) {
-    sayLongText(`(x${cart[index]}) ${item.prettyname}: $${item.price}.00`)
-    balance += cart[index] * item.price
+function showCartRow(prettyname: string, quantity: number, price: number) {
+    sayLongText(`(x${quantity}) ${prettyname}: $${price}.00`)
+}
+function showNewTotal(prettyname: string, quantity: number, price: number, balance: number) {
+    showCartRow(prettyname, quantity, price)
+    balance += quantity * price
     return balance
+}
+function addToTotal(index: number, balance: number) {
+    return showNewTotal(
+        ingredience[index].prettyname,
+        cart[index],
+        ingredience[index].price,
+        balance
+    )
 }
 function pushFetchList(sprite: Sprite) {
     sprite.setFlag(SpriteFlag.Invisible, true)
@@ -3451,6 +3483,21 @@ function setAvailableIngredience() {
             inventory.push(0)
         }
 
+        switch (index) {
+            case Magic.DMCA_TAKEDOWN_NOTICE:
+                if (hasAcceptedCharge) {
+                    continue
+                }
+
+                break
+            case Magic.MISSINGNO:
+                if (info.score() < OUTSTANDING_GOAL) {
+                    continue
+                }
+
+                break
+        }
+
         if (hasAcceptedCharge && item.name === `magicDmcaTakedownNotice`) {
             continue
         }
@@ -3497,6 +3544,17 @@ function newIdlingSprite(num: number): Sprite {
     sprites.setDataNumber(sprite, "type", num)
     return sprite
 }
+
+let martCountdownInterval: number = -1
+
+function setMartCountdownInterval(interval: number) {
+    martCountdownInterval = interval
+}
+
+function getMartCountdownInterval() {
+    return martCountdownInterval
+}
+
 function enterMart() {
     resetSprites()
     respawnShoppers = false
@@ -3527,39 +3585,59 @@ function enterMart() {
 
         if (hasAcceptedCharge) {
             pause(18000)
+            return
         }
-        else {
-            if (inMart)
-                music.play(music.createSong(assets.song`dopicTown1`), music.PlaybackMode.InBackground)
 
-            pause(2000)
+        if (inMart)
+            music.play(music.createSong(assets.song`dopicTown1`), music.PlaybackMode.InBackground)
 
-            if (inMart)
-                music.play(music.createSong(assets.song`dopicTown2`), music.PlaybackMode.LoopingInBackground)
+        pause(2000)
 
-            pause(4000)
-            music.stopAllSounds()
+        if (inMart)
+            music.play(music.createSong(assets.song`dopicTown2`), music.PlaybackMode.LoopingInBackground)
 
-            if (inMart)
-                music.play(music.createSong(assets.song`dopicTown3`), music.PlaybackMode.LoopingInBackground)
+        pause(4000)
+        music.stopAllSounds()
 
-            pause(12000 * randint(1, 4))
-            music.stopAllSounds()
+        if (inMart)
+            music.play(music.createSong(assets.song`dopicTown3`), music.PlaybackMode.LoopingInBackground)
 
-            if (inMart)
+        let countdown = 12 * randint(1, 4)
+
+        setMartCountdownInterval(setInterval(
+            () => {
+                if (!enemiesCanMove) {
+                    return
+                }
+
+                countdown--
+
+                if (countdown !== 0) {
+                    return
+                }
+
+                clearInterval(getMartCountdownInterval())
+                music.stopAllSounds()
+
+                if (!inMart) {
+                    return
+                }
+
                 music.play(music.createSong(assets.song`dopicTown4`), music.PlaybackMode.LoopingInBackground)
-        }
+                countdownType = 0
+                info.startCountdown(10)
 
-        if (inMart) {
-            info.startCountdown(10)
-
-            // issue: a bug
-            const awUgonDehhUgonGitKiww = sprites.create(assets.image`vTanRageFace`, SpriteKind.Dark)
-            awUgonDehhUgonGitKiww.setFlag(SpriteFlag.GhostThroughWalls, true)
-            awUgonDehhUgonGitKiww.setScale(2)
-            tiles.placeOnTile(awUgonDehhUgonGitKiww, tiles.getTileLocation(12, 19))
-            awUgonDehhUgonGitKiww.follow(voluntold, moveSpeed / 1.5)
-        }
+                // issue: a bug
+                const awUgonDehhUgonGitKiww = sprites.create(assets.image`vTanRageFace`, SpriteKind.Dark)
+                awUgonDehhUgonGitKiww.setFlag(SpriteFlag.GhostThroughWalls, true)
+                awUgonDehhUgonGitKiww.setScale(2) // todo a
+                tiles.placeOnTile(awUgonDehhUgonGitKiww, tiles.getTileLocation(12, 19))
+                const followSpeed = moveSpeed / 1.5
+                awUgonDehhUgonGitKiww.follow(voluntold, followSpeed)
+                sprites.setDataNumber(awUgonDehhUgonGitKiww, "followSpeed", followSpeed)
+            },
+            1000,
+        ))
     })
 }
 function enterTopFloor(col: number, row: number) {
@@ -5309,7 +5387,6 @@ function enterHomeOfBox() {
 function enterHumbleHome(col: number = 10, row: number = 2) {
     resetSprites()
     respawnShoppers = false
-    // todo b
     tiles.setCurrentTilemap(tilemap`level12`)
 
     cauldron = sprites.create(assets.image`cauldron`, SpriteKind.Neutral)
@@ -5837,6 +5914,7 @@ scene.onHitWall(SpriteKind.Player, function (sprite, location) {
         }
 
         sayLongText("Oh, is the door stuck? Let me get that for you.", manager.image)
+        const prevManagerImage = manager.image
 
         tiles.placeOnTile(
             voluntold,
@@ -5857,7 +5935,7 @@ scene.onHitWall(SpriteKind.Player, function (sprite, location) {
             }
 
             if (inMart) {
-                manager.setImage(assets.image`manager`)
+                manager.setImage(prevManagerImage)
                 sayLongText("And it's open! Have a good night!", manager.image)
             }
         })
@@ -6819,12 +6897,14 @@ sprites.onOverlap(SpriteKind.Dark, SpriteKind.Idling, function (sprite, otherSpr
     music.play(music.melodyPlayable(music.smallCrash), music.PlaybackMode.InBackground)
 })
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Managerial, function (sprite, otherSprite) {
+    enemiesCanMove = false
     const loc = otherSprite.tilemapLocation()
     tiles.placeOnTile(sprite, tiles.getTileLocation(loc.col, loc.row + 2))
 
     if (getTotal(cart) === 0) {
         sayLongText("Hi! Welcome to Magic Mart.")
         sayLongText("Talk to me when you're ready to check out.")
+        enemiesCanMove = true
         return
     }
 
@@ -6839,19 +6919,21 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Managerial, function (sprite, ot
         otherSprite.sayText(`$${balance}.00`)
         const item = ingredience[index]
 
-        if (item.name === `beetroot`) {
+        switch (index) {
+        case Magic.BEETROOT: 
             sayLongText("Is that beetroot?", otherSprite.image)
             sayLongText("You want beetroot!?", otherSprite.image)
             sayLongText("What are you gonna do with a beetroot?", otherSprite.image)
 
             if (game.ask("Add beetroot?")) {
-                balance = addToTotal(item, index, balance)
+                balance = addToTotal(index, balance)
             }
             else {
                 sayLongText("\"No\" to the beetroot.", otherSprite.image)
             }
-        }
-        else if (item.name === `magicFeces`) {
+
+            break
+        case Magic.FECES:
             if (hasFoundTheFeces) {
                 sayLongText("Magic feces. Why? Why again?", otherSprite.image)
             }
@@ -6864,13 +6946,14 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Managerial, function (sprite, ot
 
             if (game.ask("Add magic feces?")) {
                 sayLongText("Ugh.", otherSprite.image)
-                balance = addToTotal(item, index, balance)
+                balance = addToTotal(index, balance)
             }
             else {
                 sayLongText("\"No\" to the feces.", otherSprite.image)
             }
-        }
-        else if (item.name === `magicDmcaTakedownNotice`) {
+
+            break
+        case Magic.DMCA_TAKEDOWN_NOTICE:
             sayLongText("A magic DMCA takedown notice?", otherSprite.image)
             sayLongText("\"Free of charge?\"", otherSprite.image)
             sayLongText("Who gave this to you?", otherSprite.image)
@@ -6885,9 +6968,28 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Managerial, function (sprite, ot
             else {
                 sayLongText("Rebuff and counter. Well okay then.", otherSprite.image)
             }
-        }
-        else {
-            balance = addToTotal(item, index, balance)
+
+            break
+        case Magic.MISSINGNO:
+            sayLongText(`One magic\n${item.prettyname}`, otherSprite.image)
+            sayLongText("Once purchased, has the effect of maxing out the sixth item of your inventory,", otherSprite.image)
+            sayLongText("which is:\nmagic gilding.", otherSprite.image)
+
+            if (game.ask("Convert cash to gold?")) {
+                music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.InBackground)
+                cart[Magic.GILDING] = 255
+                balance += 400000
+                showCartRow(ingredience[index].prettyname, cart[index], ingredience[index].price)
+                otherSprite.setImage(assets.image`managerGlitched`)
+            }
+            else {
+                sayLongText("Well okay then.", otherSprite.image)
+            }
+
+            break
+        default:
+            balance = addToTotal(index, balance)
+            break
         }
     }
 
@@ -6896,6 +6998,7 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Managerial, function (sprite, ot
 
     if (balance < info.score() + itemCost) {
         if (!game.ask("Pay for the items in cart?")) {
+            enemiesCanMove = true
             return
         }
 
@@ -6919,6 +7022,8 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Managerial, function (sprite, ot
             manager.sayText(null)
         })
     }
+
+    enemiesCanMove = true
 })
 
 let recipePlacement = [
@@ -7209,8 +7314,8 @@ function makePurchase(customer: Sprite, confection: Sprite, removeCustomer: bool
 
         time_sequence([
             [2000, () => {
-                music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground)
-                customer.destroy(effects.disintegrate, 500)
+                music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground);
+                customer.destroy(effects.disintegrate, 500);
             }],
             [3000, () => {
                 voluntold.sayText("Uh oh.", 500, false)
@@ -7258,6 +7363,10 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.BeetrootEnjoyer, function (sprit
     hitPlayer(sprite, 3, 1000)
 })
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Dark, function (sprite, otherSprite) {
+    if (inMart) {
+        hasBusCard = false
+    }
+
     hitPlayer(sprite)
 })
 sprites.onOverlap(SpriteKind.Volunteer, SpriteKind.Enemy, function (sprite, otherSprite) {
@@ -8960,7 +9069,7 @@ inventory = [
 
 function drawingboard_2024_07_29() {
     recipe = {
-        poisoned: true,
+        poisoned: false,
         beetroot: true,
         compound: false,
         ricochet: true,
@@ -8987,7 +9096,7 @@ function drawingboard_2024_07_29() {
     hasAshBlossom = true
     forcedToEatStartingTile = 2
     busCardsActive = true
-    info.setScore(400000)
+    info.setScore(600000)
 
     // ingredientEncounters = [
     //     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
