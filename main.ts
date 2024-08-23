@@ -455,11 +455,12 @@ function hitFood(sprite: Sprite) {
         sprite,
     )
 
-    if (status) {
-        status.value--
-    } else {
+    if (!status) {
         sprites.destroy(sprite, effects.disintegrate, 500)
+        return
     }
+
+    status.value--
 }
 function makePurchase(customer: Sprite, confection: Sprite, removeCustomer: boolean) {
     const drop: Sprite = Math.percentChance(1)
@@ -1406,12 +1407,6 @@ const Skill = {
     DECOY: 3,
 }
 
-const Companion = {
-    LUCKY_CAT: 0,
-    KING_SHARK: 1,
-    KPOP_STAN: 2,
-}
-
 const recipes = [
     {
         name: `grey`,
@@ -1555,6 +1550,7 @@ type spriteData_t = {
     directions: Image[]
     remarks: string[]
     longText: string[]
+    animations: Image[][]
 }
 
 const Idler = {
@@ -1562,6 +1558,21 @@ const Idler = {
     CUSTOMTER_MALE: 1,
     CUSTOMER_FEMALE: 2,
     WISEMAN: 3,
+}
+
+const Companion = {
+    LUCKY_CAT: 0,
+    KING_SHARK: 1,
+    KPOP_STAN: 2,
+}
+
+const COMPANION_INDEX = 4
+
+const Dir = {
+    RIGHT: 0,
+    UP: 1,
+    LEFT: 2,
+    DOWN: 3,
 }
 
 const spriteData: spriteData_t[] = [
@@ -1579,6 +1590,7 @@ const spriteData: spriteData_t[] = [
             "What? \"Try a sample?\" But it's beetroot. I don't like beetroot.",
             "Cookies? Sorry, no, thanks.",
         ],
+        animations: [],
     },
     {
         name: "customerMale",
@@ -1593,6 +1605,7 @@ const spriteData: spriteData_t[] = [
         ],
         longText: [
         ],
+        animations: [],
     },
     {
         name: "customerFemale",
@@ -1608,6 +1621,7 @@ const spriteData: spriteData_t[] = [
         longText: [
             "Hey, do you know where I can find beetroot?",
         ],
+        animations: [],
     },
     {
         name: "wiseman",
@@ -1621,8 +1635,94 @@ const spriteData: spriteData_t[] = [
         ],
         longText: [
         ],
+        animations: [],
     },
+    {
+        name: "luckycat",
+        directions: [
+            assets.image`luckyCat_FlipX`,
+            assets.image`luckyCat`,
+            assets.image`luckyCat`,
+            assets.image`luckyCat`,
+        ],
+        remarks: [
+            "lol I'm a cat",
+        ],
+        longText: [
+        ],
+        animations: [
+            assets.animation`luckyCatJump_FlipX`,
+            [],
+            assets.animation`luckyCatJump`,
+            [],
+        ],
+    },
+    {
+        name: "kingshark",
+        directions: [
+            assets.image`kingShark_FlipX`,
+            assets.image`kingShark`,
+            assets.image`kingShark`,
+            assets.image`kingShark`,
+        ],
+        remarks: [
+            "lol I'm a shark",
+        ],
+        longText: [
+        ],
+        animations: [
+            assets.animation`kingSharkJump_FlipX`,
+            [],
+            assets.animation`kingSharkJump`,
+            [],
+        ],
+    },
+    {
+        name: "stan",
+        directions: [
+            assets.image`stan`,
+            assets.image`stan`,
+            assets.image`stan`,
+            assets.image`stan`,
+        ],
+        remarks: [
+            "I love BTS!",
+            "I <3 BTS!",
+            "Your music taste is bad!",
+        ],
+        longText: [
+        ],
+        animations: [
+            assets.animation`stanJump`,
+            [],
+            assets.animation`stanJump`,
+            [],
+        ],
+    }
 ]
+
+function newCompanionSprite(direction: number | null = null): Sprite {
+    if (direction === null) {
+        direction = Dir.LEFT
+    }
+
+    const sprite = sprites.create(
+        spriteData[COMPANION_INDEX + companionType].directions[direction],
+        SpriteKind.Companion,
+    )
+
+    animation.runImageAnimation(sprite, spriteData[COMPANION_INDEX + companionType].animations[direction], 50, true)
+    return sprite
+}
+
+function turnCompanion(direction: number, sprite: Sprite | null = null) {
+    if (sprite === null) {
+        sprite = pet
+    }
+
+    sprite.setImage(spriteData[COMPANION_INDEX + companionType].directions[direction])
+    animation.runImageAnimation(sprite, spriteData[COMPANION_INDEX + companionType].animations[direction], 50, true)
+}
 
 class After {
     action: () => void = () => { }
@@ -4442,19 +4542,19 @@ function knockBack(): number {
     let vy: number = 0
 
     switch (direction) {
-        case 0:
+        case Dir.RIGHT:
             vx = temp * -moveSpeed
             vy = 0
             break
-        case 1:
+        case Dir.UP:
             vx = 0
             vy = temp * moveSpeed
             break
-        case 2:
+        case Dir.LEFT:
             vx = temp * moveSpeed
             vy = 0
             break
-        case 3:
+        case Dir.DOWN:
             vx = 0
             vy = temp * -moveSpeed
             break
@@ -4471,7 +4571,7 @@ function knockBack(): number {
     return waitTime
 }
 function reverseDirection(num: number) {
-    return [2, 3, 0, 1][num]
+    return [Dir.LEFT, Dir.DOWN, Dir.RIGHT, Dir.UP][num]
 }
 function getRevenue() {
     return (4 + 0.5 * recipe.revenue_mult)
@@ -4498,19 +4598,19 @@ function startIdleMove(sprite: Sprite) {
     let vy: number = 0
 
     switch (direction) {
-        case 0:
+        case Dir.RIGHT:
             vx = 1
             vy = 0
             break
-        case 1:
+        case Dir.UP:
             vx = 0
             vy = -1
             break
-        case 2:
+        case Dir.LEFT:
             vx = -1
             vy = 0
             break
-        case 3:
+        case Dir.DOWN:
             vx = 0
             vy = 1
             break
@@ -5039,9 +5139,6 @@ function trySetPet() {
         return
     }
 
-    let image: Image = assets.image`luckyCat`
-    let anim: Image[] = []
-
     // link: crown pixel art
     // - url
     //   - <https://www.vecteezy.com/vector-art/25560519-crown-pixel-8-bit-isolated-on-white-background>
@@ -5052,44 +5149,7 @@ function trySetPet() {
     //   - <https://www.freepik.com/premium-vector/pixel-art-king-crown-icon-bit-game_11812813.htm>
     // - retrieved: 2024_08_23
 
-    // todo c
-    switch (companionType) {
-        case Companion.LUCKY_CAT:
-            image = assets.image`luckyCat`
-            anim = assets.animation`luckyCatJump`
-            break
-        case Companion.KING_SHARK:
-            image = assets.image`kingShark`
-            anim = assets.animation`kingSharkJump`
-            break
-        case Companion.KPOP_STAN:
-            image = img`
-                . f f f . f f f f . f f f .
-                f f f f f c c c c f f f f f
-                f f f f b c c c c b f f f f
-                f f f c 3 c c c c 3 c f f f
-                . f 3 3 c c c c c c 3 3 f .
-                . f c c c c 4 4 c c c c f .
-                . f f c c 4 4 4 4 c c f f .
-                . f f f b f 4 4 f b f f f .
-                . f f 4 1 f d d f 1 4 f f .
-                . . f f d d d d d d f f . .
-                . . e f e 4 4 4 4 e f e . .
-                . e 4 f b 3 3 3 3 b f 4 e .
-                . 4 d f 3 3 3 3 3 3 c d 4 .
-                . 4 4 f 6 6 6 6 6 6 f 4 4 .
-                . . . . f f f f f f . . . .
-                . . . . f f . . f f . . . .
-            `
-            break
-        default:
-            image = assets.image`luckyCat`
-            break
-    }
-
-    pet = sprites.create(image, SpriteKind.Companion)
-    animation.runImageAnimation(pet, anim, 50, true)
-
+    pet = newCompanionSprite()
     pet.setFlag(SpriteFlag.GhostThroughTiles, true)
     pet.setFlag(SpriteFlag.GhostThroughWalls, true)
     tiles.placeOnTile(
@@ -7220,7 +7280,7 @@ function down() {
         return
     }
 
-    direction = 3
+    direction = Dir.DOWN
     voluntold.setImage(imageDown())
 }
 function up() {
@@ -7228,7 +7288,7 @@ function up() {
         return
     }
 
-    direction = 1
+    direction = Dir.UP
     voluntold.setImage(imageUp())
 }
 function left() {
@@ -7236,7 +7296,7 @@ function left() {
         return
     }
 
-    direction = 2
+    direction = Dir.LEFT
     voluntold.setImage(imageLeft())
 }
 function right() {
@@ -7244,7 +7304,7 @@ function right() {
         return
     }
 
-    direction = 0
+    direction = Dir.RIGHT
     voluntold.setImage(imageRight())
 }
 
@@ -10136,7 +10196,6 @@ let voluntold: Sprite = null
 let stalker: Sprite = null
 let startingTile: Sprite = null
 let face: Sprite = null
-let companionFace: Image = null
 let cauldron: Sprite = null
 let pet: Sprite = null
 let skillTrader: Sprite = null
@@ -10146,7 +10205,7 @@ let delegate: Sprite = null
 let manager: Sprite = null
 let terminal: Sprite = null
 
-let direction: number = 3
+let direction: number = Dir.DOWN
 let moveSpeed: number = 0
 let enterRow: number = 0
 let enterCol: number = 0
@@ -10162,7 +10221,7 @@ let companionState: number = 0
 let fetchState: number = 0
 let minSpeed: number = 0
 let maxSpeed: number = 0
-let companionType: number = Companion.LUCKY_CAT
+let companionType: number = Companion.KPOP_STAN // todo
 
 face = sprites.create(assets.image`voluntoldBetterModel`, SpriteKind.Invulnerable)
 tiles.placeOnTile(face, tiles.getTileLocation(0, 0))
@@ -10227,7 +10286,7 @@ fetchState = 0
 minSpeed = 15
 maxSpeed = 24
 companionState = 0
-direction = 3
+direction = Dir.DOWN
 enterTopFloor(enterCol, enterRow)
 
 // // todo: disable for testing
@@ -10239,7 +10298,13 @@ game.onUpdateInterval(250, function () {
     }
 
     if (Math.percentChance(1)) {
-        pet.sayText("lol I'm a cat", 500, false)
+        pet.sayText(
+            spriteData[COMPANION_INDEX + companionType]
+                .remarks
+                ._pickRandom(),
+            500,
+            false,
+        )
     }
 
     let g: tiles.Location = pet.tilemapLocation()
@@ -10268,12 +10333,16 @@ game.onUpdateInterval(250, function () {
         return
     }
 
+    // todo a
+
     if (g.col < h.col) {
         pet.vx = 1.5 * moveSpeed
+        turnCompanion(Dir.RIGHT, pet)
     }
 
     if (g.col > h.col) {
         pet.vx = -1.5 * moveSpeed
+        turnCompanion(Dir.LEFT, pet)
     }
 
     if (g.row < h.row) {
