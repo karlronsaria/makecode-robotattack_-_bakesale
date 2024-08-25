@@ -30,6 +30,8 @@ const SOFTLOCK_JAIL = assets.song`softlockJail`
 
 
 namespace SpriteKind {
+    export const _MY_START = SpriteKind.create()
+
     export const Goal = SpriteKind.create()
     export const Employer = SpriteKind.create()
     export const Killer = SpriteKind.create()
@@ -63,6 +65,8 @@ namespace SpriteKind {
     export const BlueEyesWhiteDragonCard = SpriteKind.create()
     export const RecipeCard = SpriteKind.create()
     export const JumpPlayer = SpriteKind.create()
+
+    export const _LENGTH = SpriteKind.create()
 }
 
 // /*
@@ -243,6 +247,14 @@ let recipe: recipe_t = {
     shield: 0,
 }
 
+// user
+// - [ ] 2024_08_24_025137
+//   - q: what starting tile?
+//   - a:
+//     - dialogue
+//       - What are you waiting for? Do it, you coward. Eat your starting tile.
+//       - What starting tile?
+//       - The tile. The one you started on. That tile.
 // issue
 // - [x] 2024_08_23_010728
 //   - actual: rage and completion endings conflict
@@ -4789,42 +4801,15 @@ function resetSprites() {
     ParticleSprite.destroyAll()
 
     for (const kind of [
-        SpriteKind.Goal,
-        SpriteKind.Employer,
         SpriteKind.Projectile,
         SpriteKind.Food,
         SpriteKind.Enemy,
-        SpriteKind.Killer,
-        SpriteKind.Neutral,
-        SpriteKind.Antisocial,
-        SpriteKind.HesperianOrb,
-        SpriteKind.RedundantSphere,
-        SpriteKind.Professional,
-        SpriteKind.Unlocking,
-        SpriteKind.Dark,
-        SpriteKind.ForbiddenPotable,
-        SpriteKind.Trader,
-        SpriteKind.Volunteer,
-        SpriteKind.FakePlayer,
-        SpriteKind.MagicGrease,
-        SpriteKind.Lucky,
-        SpriteKind.ExtraLife,
-        SpriteKind.Companion,
-        SpriteKind.TransitCard,
-        SpriteKind.TransitSign,
-        SpriteKind.Managerial,
-        SpriteKind.MagicIngredience,
-        SpriteKind.ToiletDisposal,
-        SpriteKind.Disinterested,
-        SpriteKind.Idling,
-        SpriteKind.BeetrootEnjoyer,
-        SpriteKind.ComputerTerminal,
-        SpriteKind.DeusExMachinaCard,
-        SpriteKind.BlueEyesWhiteDragonCard,
-        SpriteKind.RecipeCard,
-        SpriteKind.JumpPlayer,
     ]) {
         sprites.destroyAllSpritesOfKind(kind)
+    }
+
+    for (let i: number = SpriteKind._MY_START; i < SpriteKind._LENGTH; ++i) {
+        sprites.destroyAllSpritesOfKind(i)
     }
 
     fetchable = []
