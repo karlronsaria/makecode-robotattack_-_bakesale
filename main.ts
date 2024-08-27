@@ -317,7 +317,7 @@ function jail(col: number, row: number) {
     buttonsActive = false
     pet.destroy()
 
-    let jail = sprites.create(
+    const jail = sprites.create(
         assets.image`gbj`,
         SpriteKind.Neutral,
     )
@@ -346,12 +346,12 @@ function jail(col: number, row: number) {
         tiles.setWallAt(tiles.getTileLocation(pair[0], pair[1]), true)
     }
 
-    let rock: Sprite = sprites.create(
+    const rock: Sprite = sprites.create(
         assets.image`rockDown`,
         SpriteKind.Neutral,
     )
 
-    let sanne: Sprite = sprites.create(
+    const sanne: Sprite = sprites.create(
         assets.image`sanneDown`,
         SpriteKind.Neutral,
     )
@@ -377,39 +377,17 @@ function jail(col: number, row: number) {
     rock.y += 8;
 
     time_sequence([
-        [5000, () => {
-            jail.sayText("I need to think about what I've done.")
-        }],
-        [10000, () => {
-            jail.sayText("Yes, this is a softlock.")
-        }],
-        [5000, () => {
-            jail.sayText("This is a softlock.")
-        }],
-        [5000, () => {
-            jail.sayText("You're softlocked.")
-        }],
-        [5000, () => {
-            jail.sayText("No, this is a softlock.")
-        }],
-        [5000, () => {
-            jail.sayText("You're being softlocked.")
-        }],
-        [5000, () => {
-            jail.sayText(":|", 10000, false)
-        }],
-        [20000, () => {
-            jail.sayText("Look. You're softlocked. Okay?")
-        }],
-        [2000, () => {
-            jail.sayText("You're not getting your game back.", 10000, false)
-        }],
-        [20000, () => {
-            jail.sayText("Shoutout to Simpleflips", 10000, false)
-        }],
-        [20000, () => {
-            jail.sayText("Don't put feces in your cookies.", 10000, false)
-        }],
+        [5000, () => jail.sayText("I need to think about what I've done.")],
+        [10000, () => jail.sayText("Yes, this is a softlock.")],
+        [5000, () => jail.sayText("This is a softlock.")],
+        [5000, () => jail.sayText("You're softlocked.")],
+        [5000, () => jail.sayText("No, this is a softlock.")],
+        [5000, () => jail.sayText("You're being softlocked.")],
+        [5000, () => jail.sayText(":|", 10000, false)],
+        [20000, () => jail.sayText("Look. You're softlocked. Okay?")],
+        [2000, () => jail.sayText("You're not getting your game back.", 10000, false)],
+        [20000, () => jail.sayText("Shoutout to Simpleflips", 10000, false)],
+        [20000, () => jail.sayText("Don't put feces in your cookies.", 10000, false)],
     ])
 }
 function cloneAdvice(list: string[][]): string[][] {
@@ -475,6 +453,26 @@ function hitFood(sprite: Sprite) {
     status.value--
 }
 function makePurchase(customer: Sprite, confection: Sprite, removeCustomer: boolean) {
+    if (recipe.poisoned) {
+        freeze()
+        sprites.destroyAllSpritesOfKind(SpriteKind.Food)
+        sprites.destroyAllSpritesOfKind(SpriteKind.Goal)
+        pet.destroy()
+        customer.sayText("!")
+        music.play(music.melodyPlayable(music.baDing), music.PlaybackMode.InBackground)
+
+        time_sequence([
+            [2000, () => {
+                music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground)
+                customer.destroy(effects.disintegrate, 500)
+            }],
+            [3000, () => voluntold.sayText("Uh oh.", 500, false)],
+            [2000, () => startSequenceArrestAndSoftlock()],
+        ])
+
+        return
+    }
+
     const drop: Sprite = Math.percentChance(1)
         ? sprites.create(assets.image`hater-ade`, SpriteKind.MagicGrease)
         : (hasLuck && Math.percentChance(5)
@@ -486,28 +484,6 @@ function makePurchase(customer: Sprite, confection: Sprite, removeCustomer: bool
         )
 
     tiles.placeOnTile(drop, customer.tilemapLocation())
-
-    if (recipe.poisoned) {
-        freeze()
-        sprites.destroyAllSpritesOfKind(SpriteKind.Food)
-        sprites.destroyAllSpritesOfKind(SpriteKind.Goal)
-        pet.destroy()
-        customer.sayText("!")
-        music.play(music.melodyPlayable(music.baDing), music.PlaybackMode.InBackground)
-
-        time_sequence([
-            [2000, () => {
-                music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground);
-                customer.destroy(effects.disintegrate, 500);
-            }],
-            [3000, () => {
-                voluntold.sayText("Uh oh.", 500, false)
-            }],
-            [2000, () => {
-                startSequenceArrestAndSoftlock()
-            }],
-        ])
-    }
 
     if (removeCustomer) {
         sprites.destroy(customer)
@@ -1554,7 +1530,7 @@ const ingredience = [
         price: 400000,
         num: 1,
         chance: 100,
-    }
+    },
 ]
 
 type spriteData_t = {
@@ -1719,11 +1695,18 @@ function newCompanionSprite(direction: number | null = null): Sprite {
     }
 
     const sprite = sprites.create(
-        spriteData[COMPANION_INDEX + companionType].directions[direction],
+        spriteData[COMPANION_INDEX + companionType]
+            .directions[direction],
         SpriteKind.Companion,
     )
 
-    animation.runImageAnimation(sprite, spriteData[COMPANION_INDEX + companionType].animations[direction], 50, true)
+    animation.runImageAnimation(
+        sprite,
+        spriteData[COMPANION_INDEX + companionType]
+            .animations[direction],
+        50, true,
+    )
+
     return sprite
 }
 
@@ -1733,7 +1716,13 @@ function turnCompanion(direction: number, sprite: Sprite | null = null) {
     }
 
     sprite.setImage(spriteData[COMPANION_INDEX + companionType].directions[direction])
-    animation.runImageAnimation(sprite, spriteData[COMPANION_INDEX + companionType].animations[direction], 50, true)
+
+    animation.runImageAnimation(
+        sprite,
+        spriteData[COMPANION_INDEX + companionType]
+            .animations[direction],
+        50, true,
+    )
 }
 
 class After {
@@ -1780,7 +1769,7 @@ class KitchenGame {
     static SEND_NEXT_INGREDIENT_INTERVAL = 6000
     static MAX_SUCCESS = 3
 
-    static callback: (s: number) => void = (s: number) => { game.gameOver(s > 0) }
+    static callback: (s: number) => void = (s: number) => game.gameOver(s > 0)
     static intervals: any[] = []
     static ovenCoords: number[] = [8, 6]
     static processorCoords: number[] = [1, 4]
@@ -2122,7 +2111,7 @@ class KitchenGame {
         KitchenGame.processorTime += randint(KitchenGame.timeAddMin, KitchenGame.timeAddMax)
         KitchenGame.processorOn = KitchenGame.ingredience > 0
         music.play(music.melodyPlayable(music.baDing), music.PlaybackMode.InBackground)
-        sprite.sayText(":)", 500, false)
+        sprite.sayText(":)", 500, false);
 
         if (KitchenGame.processorOn) {
             KitchenGame.stopAnimMove(sprite)
@@ -4095,7 +4084,7 @@ function newAoeSprite(sprite: Sprite, lifespan: number) {
 
 ParticleSprite.startSlowEffect(
     SpriteKind.Enemy,
-    (): number => { return 2 * recipe.slowing }
+    (): number => 2 * recipe.slowing
 )
 
 class CutsceneLagPolice {
@@ -4524,10 +4513,9 @@ function findDisposableInventory(): number {
         .map((v, i) => v > 0 ? i : -1)
         .filter(i => i >= 0)
 
-    const i = tempList
-        .find(i => ingredience[i].name === `magicFeces`)
-
-    return i === undefined ? tempList._pickRandom() : i
+    return inventory[Magic.FECES] > 0
+        ? Magic.FECES
+        : tempList._pickRandom()
 }
 function endRage() {
     music.stopAllSounds()
@@ -7526,9 +7514,7 @@ scene.onPathCompletion(SpriteKind.Neutral, function (sprite, location) {
     }
 
     music.stopAllSounds()
-    startGallery(
-        () => { newExit(10, 3) },
-    )
+    startGallery(() => newExit(10, 3))
 })
 scene.onOverlapTile(SpriteKind.Player, assets.tile`myTile2`, function (sprite, location) {
     goalSprite.sayText("You're doing great, hun!", 2000, false)
@@ -9734,9 +9720,7 @@ function cardGameEnding() {
 
                         timer.after(24500, function () {
                             music.stopAllSounds()
-                            startGallery(
-                                () => { newExit(10, 3) },
-                            )
+                            startGallery(() => newExit(10, 3))
                         })
                     })
                 })
@@ -9762,9 +9746,7 @@ function cardGameEnding() {
                 })
                 timer.after(11000, function () {
                     music.stopAllSounds()
-                    startGallery(
-                        () => { newExit(10, 3) },
-                    )
+                    startGallery(() => newExit(10, 3))
                 })
             }
         })
@@ -10345,7 +10327,8 @@ game.onUpdateInterval(5000, function () {
 
     if (Math.percentChance(20)) {
         voluntold.sayText("I am over- burdened.", 2000, true)
-    } else if (buttonsActive && skillNum === 1 && info.score() >= EXTRA_LIFE_COST + itemCost) {
+    }
+    else if (buttonsActive && skillNum === 1 && info.score() >= EXTRA_LIFE_COST + itemCost) {
         voluntold.sayText("Press 'B'!", 2000)
     }
 
@@ -10390,30 +10373,21 @@ game.onUpdateInterval(1000, function () {
             continue
         }
 
+        if (!enemiesCanMove) {
+            scene.followPath(value, null, 0)
+            continue
+        }
+
         followPath(
             value,
             (decoyExists ? decoy : voluntold).tilemapLocation(),
-            +enemiesCanMove
-                * (randint(minSpeed, maxSpeed)
-                    - (companionState === 2
-                        && pet !== null
-                        && value.overlapsWith(pet) ? 3 : 0
-                    ))
+            (randint(minSpeed, maxSpeed)
+                - (companionState === 2
+                    && pet !== null
+                    && value.overlapsWith(pet) ? 3 : 0
+                ))
                 / (sprites.readDataNumber(value, "slowing") + 1),
         )
-
-        // // todo: remove
-        // scene.followPath(
-        //     value,
-        //     scene.aStar(
-        //         value.tilemapLocation(),
-        //         (decoyExists ? decoy : voluntold).tilemapLocation(),
-        //     ),
-        //     +enemiesCanMove
-        //         * (randint(minSpeed, maxSpeed)
-        //         - (companionState === 2 && pet !== null && value.overlapsWith(pet) ? 3 : 0))
-        //         / (sprites.readDataNumber(value, "slowing") + 1),
-        // )
     }
 
     for (const value of sprites.allOfKind(SpriteKind.BeetrootEnjoyer)) {
@@ -10422,16 +10396,6 @@ game.onUpdateInterval(1000, function () {
             voluntold.tilemapLocation(),
             +enemiesCanMove * 0.85 * moveSpeed,
         )
-
-        // // todo: remove
-        // scene.followPath(
-        //     value,
-        //     scene.aStar(
-        //         value.tilemapLocation(),
-        //         voluntold.tilemapLocation(),
-        //     ),
-        //     +enemiesCanMove * 0.85 * moveSpeed,
-        // )
     }
 
     if (paths.length > 0) {
@@ -10508,7 +10472,7 @@ inventory = [
 
 function drawingboard_2024_07_29() {
     recipe = {
-        poisoned: false,
+        poisoned: true,
         beetroot: false,
         compound: false,
         ricochet: true,
