@@ -1836,7 +1836,7 @@ class KitchenGame {
         time: number = 500
     ): Sprite[] {
         let sprites: Sprite[] = []
-        let sprite = KitchenGame.newConveyorEndLeft(time)
+        let sprite: Sprite = KitchenGame.newConveyorEndLeft(time)
         tiles.placeOnTile(sprite, tiles.getTileLocation(start, row))
         sprites.push(sprite)
         let i: number
@@ -10357,6 +10357,28 @@ game.onUpdateInterval(5000, function () {
         }
     })
 })
+function followPath(
+    sprite: Sprite,
+    location: tiles.Location,
+    speed: number,
+) {
+    let path = scene.aStar(
+        sprite.tilemapLocation(),
+        location,
+    )
+
+    if (!path) {
+        return
+    }
+
+    path.removeAt(0)
+
+    if (path.length === 0) {
+        return
+    }
+
+    scene._followPath(sprite, path, speed)
+}
 game.onUpdateInterval(1000, function () {
     for (const value of sprites.allOfKind(SpriteKind.Enemy)) {
         if (enraged) {
@@ -10368,28 +10390,48 @@ game.onUpdateInterval(1000, function () {
             continue
         }
 
-        scene.followPath(
+        followPath(
             value,
-            scene.aStar(
-                value.tilemapLocation(),
-                (decoyExists ? decoy : voluntold).tilemapLocation(),
-            ),
+            (decoyExists ? decoy : voluntold).tilemapLocation(),
             +enemiesCanMove
                 * (randint(minSpeed, maxSpeed)
-                - (companionState === 2 && pet !== null && value.overlapsWith(pet) ? 3 : 0))
+                    - (companionState === 2
+                        && pet !== null
+                        && value.overlapsWith(pet) ? 3 : 0
+                    ))
                 / (sprites.readDataNumber(value, "slowing") + 1),
         )
+
+        // // todo: remove
+        // scene.followPath(
+        //     value,
+        //     scene.aStar(
+        //         value.tilemapLocation(),
+        //         (decoyExists ? decoy : voluntold).tilemapLocation(),
+        //     ),
+        //     +enemiesCanMove
+        //         * (randint(minSpeed, maxSpeed)
+        //         - (companionState === 2 && pet !== null && value.overlapsWith(pet) ? 3 : 0))
+        //         / (sprites.readDataNumber(value, "slowing") + 1),
+        // )
     }
 
     for (const value of sprites.allOfKind(SpriteKind.BeetrootEnjoyer)) {
-        scene.followPath(
+        followPath(
             value,
-            scene.aStar(
-                value.tilemapLocation(),
-                voluntold.tilemapLocation(),
-            ),
+            voluntold.tilemapLocation(),
             +enemiesCanMove * 0.85 * moveSpeed,
         )
+
+        // // todo: remove
+        // scene.followPath(
+        //     value,
+        //     scene.aStar(
+        //         value.tilemapLocation(),
+        //         voluntold.tilemapLocation(),
+        //     ),
+        //     +enemiesCanMove * 0.85 * moveSpeed,
+        // )
     }
 
     if (paths.length > 0) {
@@ -10467,7 +10509,7 @@ inventory = [
 function drawingboard_2024_07_29() {
     recipe = {
         poisoned: false,
-        beetroot: true,
+        beetroot: false,
         compound: false,
         ricochet: true,
         revenue_add: 5,
