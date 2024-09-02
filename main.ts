@@ -4418,7 +4418,10 @@ class HaterHuntGame {
     static uncontrolledRage: boolean = false
     static mySpeed: number = 0
 
+    static prevLife: number
     static prevScore: number
+    static prevBgImage: Image
+    static prevBgColor: number
     static onA: () => void
     static onB: () => void
     static onCountdownEnd: () => void
@@ -4556,6 +4559,7 @@ class HaterHuntGame {
         HaterHuntGame.uncontrolledRage = false
         HaterHuntGame.doorSignal = 0
         HaterHuntGame.mySpeed = 100
+        info.setLife(1)
         info.setScore(0)
     }
 
@@ -5590,7 +5594,10 @@ class HaterHuntGame {
 
     static stop(win: boolean) {
         const endingScore = info.score() - 1
+        info.setLife(HaterHuntGame.prevLife)
         info.setScore(HaterHuntGame.prevScore)
+        scene.setBackgroundImage(HaterHuntGame.prevBgImage)
+        scene.setBackgroundColor(HaterHuntGame.prevBgColor)
         info.stopCountdown()
         HaterHuntGame.stopIntervals()
         HaterHuntGame.stopCourseIntervals()
@@ -5605,7 +5612,10 @@ class HaterHuntGame {
         onCountdownEnd: () => void,
         callback: (w: boolean, s: number) => void,
     ) {
+        HaterHuntGame.prevLife = info.life()
         HaterHuntGame.prevScore = info.score()
+        HaterHuntGame.prevBgImage = scene.backgroundImage()
+        HaterHuntGame.prevBgColor = scene.backgroundColor()
         HaterHuntGame.onA = onA
         HaterHuntGame.onB = onB
         HaterHuntGame.onCountdownEnd = onCountdownEnd
