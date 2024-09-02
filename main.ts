@@ -27,6 +27,9 @@ const DOPIC_TOWN_002 = assets.song`dopicTown2`
 const DOPIC_TOWN_003 = assets.song`dopicTown3`
 const DOPIC_TOWN_004 = assets.song`dopicTown4`
 const SOFTLOCK_JAIL = assets.song`softlockJail`
+const PC_BOOT = assets.song`pcBoot`
+const RAGE_TREMOR = assets.song`rageTremor`
+const UH_OH = assets.song`uhOh`
 
 
 namespace SpriteKind {
@@ -5553,7 +5556,7 @@ class HaterHuntGame {
         sprites.onOverlap(HaterHuntGame.Kind.Player, HaterHuntGame.Kind.Device, function (sprite, otherSprite) {
             const loc = otherSprite.tilemapLocation()
             tiles.placeOnTile(sprite, tiles.getTileLocation(loc.col, loc.row + 1))
-            music.play(music.createSong(assets.song`pcBoot`), music.PlaybackMode.InBackground)
+            music.play(music.createSong(PC_BOOT), music.PlaybackMode.InBackground)
         })
 
         sprites.onOverlap(HaterHuntGame.Kind.Player, HaterHuntGame.Kind.Competitor, function (sprite, otherSprite) {
@@ -5649,7 +5652,7 @@ class HaterHuntGame {
             "That punk...",
             "I stan. I STAN! I STAAN!! RAAGH!!"
         ]._pickRandom(), 1000, true)
-        music.play(music.createSong(hex`0078000408010106001c00010a006400f4016400000400000000000000000000000000000000020c0000000800011608000c000119`), music.PlaybackMode.InBackground)
+        music.play(music.createSong(RAGE_TREMOR), music.PlaybackMode.InBackground)
         animation.runMovementAnimation(
             HaterHuntGame.mySprite,
             animation.animationPresets(animation.shake),
@@ -5780,7 +5783,7 @@ class HaterHuntGame {
         HaterHuntGame.destroyAllSprites()
 
         timer.after(100, () => {
-            music.play(music.createSong(assets.song`uhOh`), music.PlaybackMode.InBackground)
+            music.play(music.createSong(UH_OH), music.PlaybackMode.InBackground)
             game.splash("The world cannot contain", "your rage")
             game.splash("Reality is collapsing", "around you")
             game.splash("You need to run")
@@ -6447,7 +6450,7 @@ function startSequenceArrestAndSoftlock() {
                 jail(4, 4)
 
                 timer.after(3000, () => {
-                    music.play(music.createSong(assets.song`softlockJail`), music.PlaybackMode.LoopingInBackground)
+                    music.play(music.createSong(SOFTLOCK_JAIL), music.PlaybackMode.LoopingInBackground)
                 })
             },
         )

@@ -995,6 +995,12 @@
         "displayName": "pcBoot",
         "namespace": "mySongs."
     },
+    "song18": {
+        "data": "0078000408010106001c00010a006400f4016400000400000000000000000000000000000000020c0000000800011608000c000119",
+        "mimeType": "application/mkcd-song",
+        "displayName": "rageTremor",
+        "namespace": "mySongs."
+    },
     "*": {
         "mimeType": "image/x-mkcd-f4",
         "dataEncoding": "base64",
