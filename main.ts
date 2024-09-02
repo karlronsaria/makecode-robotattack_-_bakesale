@@ -65,6 +65,7 @@ namespace SpriteKind {
     export const BlueEyesWhiteDragonCard = SpriteKind.create()
     export const RecipeCard = SpriteKind.create()
     export const JumpPlayer = SpriteKind.create()
+    export const HaterHuntPlayer = SpriteKind.create()
 
     export const _LENGTH = SpriteKind.create()
 }
@@ -156,6 +157,9 @@ const advice: string[][] = [
         "You may have heard that your true goal is to have enough money to pay off this town's debts.",
         "But gold is the real standard.",
         "You should invest all that money in gold!",
+    ],
+    [
+        "There are two separate minigames that you can only play if you have an active companion.",
     ],
 ]
 
@@ -267,12 +271,19 @@ let recipe: recipe_t = {
 // - [ ] 2024_08_20_223536
 //   - actual: giant confection moves in wrong direction
 // todo
+// - minigame
+//   - find the k-pop hater
+//     - [ ] hide lives
+//     - [ ] reposition runner when first encounter him running
+//     - [ ] redesign bottle seller surroundings(lack of trees)
+// - companion
+//   - [ ] give different abilities
 // [ ] consider: nerf skills
 // [x] jump the shark
 //     [x] turn companion into shark
-// [ ] jump the shark failure-to-enter message
-// [ ] find the k-pop hater
-//     [ ] turn companion into k-pop stan
+// [x] jump the shark failure-to-enter message
+// [x] find the k-pop hater
+//     [x] turn companion into k-pop stan
 // [ ] redesign Magic Mart tilemap
 // [x] police arrests
 //     [x] lag police
@@ -3165,9 +3176,11 @@ class JumpGame {
         scene.cameraShake(8, 500)
         music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground)
     }
+
     static hasFootstool(sprite: Sprite, otherSprite: Sprite): boolean {
         return JumpGame.hasSpringBoots && sprite.bottom - 8 <= otherSprite.top
     }
+
     static footstool(sprite: Sprite, otherSprite: Sprite) {
         sprite.vy = -200
         music.play(music.melodyPlayable(music.baDing), music.PlaybackMode.InBackground)
@@ -3179,6 +3192,7 @@ class JumpGame {
             JumpGame.hasSpringBoots = true
         })
     }
+
     static setMagicUpgrade(sprite: Sprite) {
         tiles.placeOnTile(sprite, tiles.getTileLocation(15, 4))
         sprite.setFlag(SpriteFlag.GhostThroughWalls, true)
@@ -3190,6 +3204,7 @@ class JumpGame {
             true,
         )
     }
+
     static resetSprites() {
         for (let kind of [
             JumpGame.Player,
@@ -3201,6 +3216,7 @@ class JumpGame {
             sprites.destroyAllSpritesOfKind(kind)
         }
     }
+
     static nextLevel(attack: boolean = true) {
         JumpGame.attacking = attack
         info.stopCountdown()
@@ -3209,6 +3225,7 @@ class JumpGame {
         JumpGame.resetSprites()
         info.changeLifeBy(1)
     }
+
     static firstLevel() {
         JumpGame.nextLevel()
         tiles.setCurrentTilemap(tilemap`JumpGameCourse`)
@@ -3218,6 +3235,7 @@ class JumpGame {
         )
         JumpGame.newMe()
     }
+
     static finalLevel() {
         JumpGame.nextLevel(false)
         tiles.setCurrentTilemap(tilemap`JumpGameGoal`)
@@ -3288,6 +3306,7 @@ class JumpGame {
         orb.y -= 12
         JumpGame.newMe(1, 50)
     }
+
     static challengeLevel() {
         JumpGame.nextLevel()
         let obstacle: number = -1
@@ -3352,6 +3371,7 @@ class JumpGame {
         JumpGame.newMe()
         JumpGame.me.sayText(`Level ${JumpGame.level}`, 2000, false)
     }
+
     static interlude() {
         JumpGame.nextLevel()
         tiles.setCurrentTilemap(tilemap`JumpGameInterlude`)
@@ -3372,6 +3392,7 @@ class JumpGame {
         )
         JumpGame.newMe(2, 42)
     }
+
     static attainMagicBoots() {
         JumpGame.nextLevel(false)
         tiles.setCurrentTilemap(tilemap`JumpGameMagicItemCourse000`)
@@ -3390,6 +3411,7 @@ class JumpGame {
 
         JumpGame.newMe()
     }
+
     static attainMagicAxe() {
         JumpGame.nextLevel(false)
         tiles.setCurrentTilemap(tilemap`JumpGameMagicItemCourse000`)
@@ -3401,6 +3423,7 @@ class JumpGame {
 
         JumpGame.newMe()
     }
+
     static die(sprite: Sprite) {
         JumpGame.dying = true
         sprites.destroy(sprite, effects.fire, 2000)
@@ -3412,6 +3435,7 @@ class JumpGame {
             JumpGame.stop(false)
         })
     }
+
     static newPlot(falling: boolean = true) {
         let thePlot = sprites.create(img`
             . . . b b b b b b b b b . . . .
@@ -3438,6 +3462,7 @@ class JumpGame {
 
         return thePlot
     }
+
     static newMe(
         col: number | null = null,
         row: number | null = null
@@ -3474,24 +3499,25 @@ class JumpGame {
         JumpGame.me.ay = 500
         JumpGame.jumps = JumpGame.JUMP_MAX
     }
+
     static newShark(minY: number, maxY: number) {
         const projectile: Sprite =
             sprites.createProjectileFromSide(img`
                 .................ccfff..............
                 ................cddbbf..............
                 ...............cddbbf...............
-                .........ffffffccbbcf...............
-                ......fffbbbbbbbbcccff..............
-                .....fbbbbbbbbbbbbbbbcfff......ccccc
-                .....bcbbbbbffbcbcbbbbcccff...cdbbbc
-                .....bbb1111ffbbcbcbbbcccccffcddbbc.
-                .....fb11111111bcbcbbbcccccccbdbbf..
-                ......fccc33c11bbbbbbcccccccccbbcf..
-                .......fc131cc11bbbbccccccccffbccf..
-                ........f33c1111bbbcccccbdbc..fbbcf.
-                .........ff1111cbbbfdddddcc....fbbf.
-                ...........ccc1fbdbbfddcc.......fbbf
-                ..............ccfbdbbfc..........fff
+                ..............fccbbcf............ccc
+                ........ffffffccccccff.........ccbbc
+                ......ffbbbbbbbbbbbbbcfff.....cdbbc.
+                ....ffbbbbbbbbbcbcbbbbcccff..cddbbf.
+                ....fbcbbbbbffbbcbcbbbcccccfffdbbf..
+                ....fbbb1111ff1bcbcbbbcccccccbbbcf..
+                .....fb11111111bbbbbbcccccccccbccf..
+                ......fccc33cc11bbbbccccccccfffbbcf.
+                .......fc131c111bbbcccccbdbc...fbbf.
+                ........f33c111cbbbfdddddcc.....fbbf
+                .........ff1111fbdbbfddcc........fff
+                ...........cccccfbdbbfc.............
                 .................fffff..............
             `, -150, 0)
         projectile.setKind(JumpGame.Sharks)
@@ -3501,6 +3527,7 @@ class JumpGame {
         projectile.setFlag(SpriteFlag.GhostThroughWalls, true)
         music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.InBackground)
     }
+
     static removeTile(col: number, row: number) {
         tiles.setTileAt(
             tiles.getTileLocation(col, row),
@@ -3528,6 +3555,7 @@ class JumpGame {
             false,
         )
     }
+
     static setGoal(col: number) {
         JumpGame.removeTile(col, JumpGame.GROUND - 3)
 
@@ -3616,6 +3644,7 @@ class JumpGame {
             true,
         )
     }
+
     static setGround(col: number, row: number | null = null) {
         if (row === null) {
             row = JumpGame.GROUND
@@ -3704,6 +3733,7 @@ class JumpGame {
             JumpGame.removeTile(col, i)
         }
     }
+
     static setHazard(col: number) {
         JumpGame.removeTile(col, JumpGame.GROUND - 2)
         JumpGame.removeTile(col, JumpGame.GROUND - 1)
@@ -3795,6 +3825,1967 @@ class JumpGame {
             tiles.getTileLocation(col, JumpGame.GROUND + 1),
             true,
         )
+    }
+}
+
+class ILikeBooksGame {
+    static NUM_ENEMIES = 4
+
+    static Kind = {
+        __START: SpriteKind.create(),
+        Player: SpriteKind.create(),
+        Enemy: SpriteKind.create(),
+        Projectile: SpriteKind.create(),
+        Neutral: SpriteKind.create(),
+        Missile: SpriteKind.create(),
+        __END: SpriteKind.create(),
+    }
+
+    static intervals: number[] = null
+    static mySprite: Sprite = null
+    static freakouts: number = 0
+
+    static onA: () => void
+    static onLifeZero: () => void
+    static callback: (w: boolean) => void
+
+    static nonZeroRand(num: number) {
+        return num * (2 * randint(0, 1) - 1)
+    }
+
+    static intro() {
+        game.splash("Lesson Time!", "Healty Living")
+        game.splash("Internet chungoids", "have entered the domicile")
+        game.splash("Press 'A'")
+        game.splash("And tell them to", "read a book!")
+    }
+
+    static furnishHouse() {
+        tiles.placeOnTile(sprites.create(img`
+            .........cccc..
+            ........c3555c.
+            ..ccccccc35553c
+            .c555553c35553c
+            c3355555c35553c
+            c3333333c35553c
+            c33cccccc35553c
+            ccc35555c35553c
+            .c355555c35553c
+            .c355555c35553c
+            .c355555c35553c
+            .c355555c35553c
+            .c355555c35553c
+            .c355555c35553c
+            .c355555c35553c
+            .c355555c33553c
+            .cccccccc33333c
+            .c555553c33333c
+            c3355555c33333c
+            c3333333c33333c
+            c3333333c33333c
+            c3333333c33333c
+            cccccccccccccc.
+            .cbbc.....cbbc.
+            `, ILikeBooksGame.Kind.Neutral), tiles.getTileLocation(9, 3))
+        tiles.placeOnTile(sprites.create(img`
+            .........cccc..
+            ........c3555c.
+            ..ccccccc35553c
+            .c555553c35553c
+            c3355555c35553c
+            c3333333c35553c
+            c33cccccc35553c
+            ccc35555c35553c
+            .c355555c35553c
+            .c355555c35553c
+            .c355555c35553c
+            .c355555c35553c
+            .c355555c35553c
+            .c355555c35553c
+            .c355555c35553c
+            .c355555c33553c
+            .cccccccc33333c
+            .c555553c33333c
+            c3355555c33333c
+            c3333333c33333c
+            c3333333c33333c
+            c3333333c33333c
+            cccccccccccccc.
+            .cbbc.....cbbc.
+            `, ILikeBooksGame.Kind.Neutral), tiles.getTileLocation(9, 5))
+        tiles.placeOnTile(sprites.create(img`
+            ..3b3b3b3b3b3b3b3b3b3b3b3b3b3b..
+            .3dd3b3b3b3b3b3b3b3b3b3b3b3bdd3.
+            bbdd3dddddddddddddddddddddd3ddbb
+            b333dd33333333333333333333dd333b
+            bbbdd3333333333333333333333ddbbb
+            b33d333d3333333d3333333d3333d33b
+            bbbd333333333333333333333333dbbb
+            b33d333333333333333333333333d33b
+            bbbd333333333333333333333333dbbb
+            b33d3333333d3333333d33333333d33b
+            bbbd333333333333333333333333dbbb
+            b33d333333333333333333333333d33b
+            bbbd333333333333333333333333dbbb
+            b33d333d3333333d3333333d3333d33b
+            bbbd333333333333333333333333dbbb
+            b33d333333333333333333333333d33b
+            bbbd333333333333333333333333dbbb
+            b33d3333333d33333333d3333333d33b
+            bbbdd3333333333333333333333ddbbb
+            b333dd33333333333333333333dd333b
+            bbdd3dddddddddddddddddddddd3ddbb
+            b3dd3b3b3b3b3b3b3b3b3b3b3b3bdd3b
+            .bbb3b3b3b3b3b3b3b3b3b3b3b3b3bb.
+            ...bbbbbbbbbbbbbbbbbbbbbbbbbb...
+            `, ILikeBooksGame.Kind.Neutral), tiles.getTileLocation(6, 4))
+        tiles.placeOnTile(sprites.create(img`
+            .cccccccccccccc.
+            cb777777777777bc
+            c77777777777777c
+            c77777777777777c
+            c77777777777777c
+            c77777777777777c
+            c77777777777777c
+            c77777777777777c
+            c76666666666667c
+            c66666666666666c
+            c67777777777776c
+            c6c666c66c666c6c
+            f6c666cddc666c6f
+            f6c6666cc6666c6f
+            f6cccccccccccc6f
+            f66666666666666f
+            f67777777777776f
+            f6c666c66c666c6f
+            f6c666cddc666c6f
+            f6c6666cc6666c6f
+            f6cccccccccccc6f
+            f66666666666666f
+            f6ffffffffffff6f
+            ffffffffffffffff
+            `, ILikeBooksGame.Kind.Neutral), tiles.getTileLocation(7, 1))
+        tiles.placeOnTile(sprites.create(img`
+            .cccccccccccccccccccccc.
+            cbddddddddddddddddddddbc
+            cddddddddddddddddddddddc
+            cddddddddddddddddddddddc
+            cddddddddddddddddddddddc
+            cddddddddddddddddddddddc
+            cddddddddddddddddddddddc
+            cbddddddddddddddddddddbc
+            ccbbbbbbbbbbbbbbbbbbbbcc
+            ccffffffffffffffffffffcc
+            cbcc33c6c44c3c7c66c3ccbc
+            cbcc33c6c44c3c7c66c3ccbc
+            fbcc33c6c44ccc7c66c3ccbf
+            fdccccccccccccccccccccdf
+            fdcbbddddddddddddddbbcdf
+            fdffffffffffffffffffffdf
+            fdccc6c33c4c6c44c3c7ccdf
+            fdccc6c33c4c6c44c3c7ccdf
+            fdccc6c33ccc6c44ccc7ccdf
+            fdccccccccccccccccccccdf
+            fdcbbddddddddddddddbbcdf
+            fdcbbddddddddddddddbbcdf
+            fdffffffffffffffffffffdf
+            ffffffffffffffffffffffff
+            `, ILikeBooksGame.Kind.Neutral), tiles.getTileLocation(5, 1))
+    }
+
+    static throwMissile(sprite: Sprite) {
+        statusbars.getStatusBarAttachedTo(StatusBarKind.Magic, sprite).value = 0
+        const missile = sprites.createProjectileFromSprite([img`
+            .cccccccccccccc.
+            cbddddddddddddbc
+            cddddddddddddddc
+            cddddddddddddddc
+            cddddddddddddddc
+            cddddddddddddddc
+            cddddddddddddddc
+            cbddddddddddddbc
+            ccbbbbbbbbbbbbcc
+            ccffffffffffffcc
+            cbc44c7c66c3ccbc
+            cbc44c7c66c3ccbc
+            fbc44c7c66c3ccbf
+            fdccccccccccccdf
+            fdcbbddddddbbcdf
+            fdffffffffffffdf
+            fdcc4c44c3c7ccdf
+            fdcc4c44c3c7ccdf
+            fdcccc44ccc7ccdf
+            fdccccccccccccdf
+            fdcbbddddddbbcdf
+            fdcbbddddddbbcdf
+            fdffffffffffffdf
+            ffffffffffffffff
+            `, img`
+            .cccccccccccccccccccccc.
+            cbddddddddddddddddddddbc
+            cddddddddddddddddddddddc
+            cddddddddddddddddddddddc
+            cddddddddddddddddddddddc
+            cddddddddddddddddddddddc
+            cddddddddddddddddddddddc
+            cbddddddddddddddddddddbc
+            ccbbbbbbbbbbbbbbbbbbbbcc
+            ccffffffffffffffffffffcc
+            cbcc33c6c44c3c7c66c3ccbc
+            cbcc33c6c44c3c7c66c3ccbc
+            fbcc33c6c44ccc7c66c3ccbf
+            fdccccccccccccccccccccdf
+            fdcbbddddddddddddddbbcdf
+            fdffffffffffffffffffffdf
+            fdccc6c33c4c6c44c3c7ccdf
+            fdccc6c33c4c6c44c3c7ccdf
+            fdccc6c33ccc6c44ccc7ccdf
+            fdccccccccccccccccccccdf
+            fdcbbddddddddddddddbbcdf
+            fdcbbddddddddddddddbbcdf
+            fdffffffffffffffffffffdf
+            ffffffffffffffffffffffff
+            `]._pickRandom(), sprite, 60, -150)
+        missile.setKind(ILikeBooksGame.Kind.Missile)
+        missile.ay = 150
+        missile.setFlag(SpriteFlag.GhostThroughWalls, true)
+        missile.setFlag(SpriteFlag.AutoDestroy, false)
+        sprite.sayText([
+            "GET              READ!!",
+            "HEALTHY          LIVING!!",
+            "READ A           BOOK!!",
+            "HAVE                 SOME           DIGESTS!!"
+        ]._pickRandom(), 2000, false)
+        animation.runMovementAnimation(
+            sprite,
+            animation.animationPresets(animation.shake),
+            200,
+            false,
+        )
+        timer.after(1000, function () {
+            ILikeBooksGame.startFreakout()
+        })
+        timer.after(2000, function () {
+            sprites.destroy(missile, effects.ashes, 500)
+            music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground)
+            music.play(music.melodyPlayable(music.bigCrash), music.PlaybackMode.InBackground)
+            scene.cameraShake(32, 500)
+        })
+    }
+
+    static newEnemy() {
+        const myEnemy = sprites.create(img`
+            ........................
+            ........................
+            ........................
+            ........................
+            ..........ffff..........
+            ........ff1111ff........
+            .......fb111111bf.......
+            .......f11111111f.......
+            ......fd11111111df......
+            ......fd11111111df......
+            ......fddd1111dddf......
+            ......fbdbfddfbdbf......
+            ......fcdcf11fcdcf......
+            .......fb111111bf.......
+            ......fffcdb1bdffff.....
+            ....fc111cbfbfc111cf....
+            ....f1b1b1ffff1b1b1f....
+            ....fbfbffffffbfbfbf....
+            .........ffffff.........
+            ...........fff..........
+            ........................
+            ........................
+            ........................
+            ........................
+            `, ILikeBooksGame.Kind.Enemy)
+        tiles.placeOnTile(myEnemy, tiles.getTileLocation(randint(6, 9), randint(3, 7)))
+        myEnemy.setStayInScreen(true)
+    }
+
+    static startFreakout() {
+        ILikeBooksGame.freakouts += 1
+        for (const value of sprites.allOfKind(ILikeBooksGame.Kind.Enemy)) {
+            value.setVelocity(randint(75, 100), ILikeBooksGame.nonZeroRand(100))
+            value.sayText("AAAAAH!", 500, false)
+            timer.after(1000, function () {
+                value.setVelocity(0, 0)
+            })
+        }
+        timer.after(2000, function () {
+            sprites.allOfKind(ILikeBooksGame.Kind.Enemy)._pickRandom().sayText([
+                "ARE YOU                    INSANE!?",
+                "WHAT                       IS WRONG                      WITH YOU!?",
+                "THIS                       IS NUTS!",
+                "I DON'T                    WANT TO                       DIE!"
+            ]._pickRandom(), 2000, false)
+        })
+        if (ILikeBooksGame.freakouts >= 3) {
+            timer.after(3000, function () {
+                game.showLongText("Stop!", DialogLayout.Bottom)
+                game.showLongText("Okay. You like books. Haha. Umm.", DialogLayout.Bottom)
+                game.showLongText("Lesson over.", DialogLayout.Bottom)
+                game.showLongText("Please leave.", DialogLayout.Bottom)
+                ILikeBooksGame.stop(true)
+            })
+        }
+    }
+
+    static init() {
+        ILikeBooksGame.freakouts = 0
+        ILikeBooksGame.intervals = null
+    }
+
+    static newPlayer(): Sprite {
+        const sprite = sprites.create(img`
+        . . . . . . 5 . 5 . . . . . . . 
+        . . . . . f 5 5 5 f f . . . . . 
+        . . . . f 1 5 2 5 1 6 f . . . . 
+        . . . f 1 6 6 6 6 6 1 6 f . . . 
+        . . . f 6 6 f f f f 6 1 f . . . 
+        . . . f 6 f f d d f f 6 f . . . 
+        . . f 6 f d f d d f d f 6 f . . 
+        . . f 6 f d 3 d d 3 d f 6 f . . 
+        . . f 6 6 f d d d d f 6 6 f . . 
+        . f 6 6 f 3 f f f f 3 f 6 6 f . 
+        . . f f d 3 5 3 3 5 3 d f f . . 
+        . . f d d f 3 5 5 3 f d d f . . 
+        . . . f f 3 3 3 3 3 3 f f . . . 
+        . . . f 3 3 5 3 3 5 3 3 f . . . 
+        . . . f f f f f f f f f f . . . 
+        . . . . . f f . . f f . . . . . 
+        `, ILikeBooksGame.Kind.Player)
+        sprite.setStayInScreen(true)
+        controller.moveSprite(sprite, 0, 100)
+        tiles.placeOnTile(sprite, tiles.getTileLocation(1, 4))
+        const statusbar: StatusBarSprite
+            = statusbars.create(20, 4, StatusBarKind.Magic)
+        statusbar.attachToSprite(sprite)
+        statusbar.max = 5
+        statusbar.value = 0
+        return sprite
+    }
+
+    static destroyAllSprites() {
+        for (let kind = ILikeBooksGame.Kind.__START; kind <= ILikeBooksGame.Kind.__END; ++kind) {
+            sprites.destroyAllSpritesOfKind(kind)
+        }
+    }
+
+    static stopIntervals() {
+        for (const interval of ILikeBooksGame.intervals) {
+            clearInterval(interval)
+        }
+    }
+
+    static startIntervals(): number[] {
+        return [
+            setInterval(
+                () => {
+                    const temp: StatusBarSprite =
+                        statusbars.getStatusBarAttachedTo(
+                            StatusBarKind.Magic,
+                            ILikeBooksGame.mySprite,
+                        )
+
+                    if (temp && temp.value < temp.max) {
+                        temp.value += 1
+                    }
+
+                    if (ILikeBooksGame.freakouts >= 1) {
+                        return
+                    }
+
+                    for (const value of sprites.allOfKind(ILikeBooksGame.Kind.Enemy)) {
+                        if (Math.percentChance(30)) {
+                            value.setVelocity(
+                                ILikeBooksGame.nonZeroRand(35),
+                                ILikeBooksGame.nonZeroRand(35),
+                            )
+
+                            timer.after(1000, function () {
+                                value.setVelocity(0, 0)
+                            })
+                        }
+                    }
+                },
+                1000,
+            ),
+            setInterval(
+                () => {
+                    if (ILikeBooksGame.freakouts >= 1) {
+                        return
+                    }
+
+                    for (const value of sprites.allOfKind(ILikeBooksGame.Kind.Enemy)) {
+                        if (Math.percentChance(80)) {
+                            continue
+                        }
+
+                        const projectile: Sprite =
+                            sprites.createProjectileFromSprite([
+                                img`
+                            ........................
+                            ........................
+                            ffffffffffffffffffffff..
+                            f11111111111111111111f..
+                            f1f1f11f111f1f11f11f1f..
+                            f1f1f1f1f11f1f1f1f1f1f..
+                            f1fff1fff11fff1fff1f1f..
+                            f1f1f1f1f11f1f1f1f1f1f..
+                            f1f1f1f1f11f1f1f1f111f..
+                            f1f1f1f1f11f1f1f1f1f1f..
+                            f11111111111111111111f..
+                            ffffffffffffffffffffff..
+                            ........................
+                            ........................
+                            ........................
+                            ........................
+                            `,
+                                img`
+                            ........................
+                            ........................
+                            fffffffffffffffff.......
+                            f111111111111111f.......
+                            f1f111ff11f111f1f.......
+                            f1f111f1f1f111f1f.......
+                            f1f111f1f1f111f1f.......
+                            f1f111f1f1f111f1f.......
+                            f1f111f1f1f11111f.......
+                            f1fff11ff1fff1f1f.......
+                            f111111111111111f.......
+                            fffffffffffffffff.......
+                            ........................
+                            ........................
+                            ........................
+                            ........................
+                            `,
+                                img`
+                            ..................................
+                            ..................................
+                            fffffffffffffffffffffffffffffffff.
+                            f1111111111111111111111111111111f.
+                            f11ff1f1f1f1f1ff111ff1f1f11ff1f1f.
+                            f1f111f1f1f1f1f1f1f111f1f1f111f1f.
+                            f1f111fff1f1f1f1f1f111f1f1ff11f1f.
+                            f1f111f1f1f1f1f1f1f1f1f1f11ff1f1f.
+                            f1f111f1f1f1f1f1f1f1f1f1f111f111f.
+                            f11ff1f1f11ff1f1f11ff11ff1ff11f1f.
+                            f1111111111111111111111111111111f.
+                            fffffffffffffffffffffffffffffffff.
+                            ..................................
+                            ..................................
+                            ..................................
+                            ..................................
+                            `,
+                                img`
+                            ........................
+                            ........................
+                            fffffffffffffffffffff...
+                            f1111111111111111111f...
+                            f1f111f1fff1fff1ff11f...
+                            f1f111f1f111f111f1f1f...
+                            f1f111f1ff11ff11ff11f...
+                            f1f1f1f1f111f111f1f1f...
+                            f1f1f1f1f111f111f1f1f...
+                            f11ffff1fff1fff1ff11f...
+                            f1111111111111111111f...
+                            fffffffffffffffffffff...
+                            ........................
+                            ........................
+                            ........................
+                            ........................
+                            `
+                            ]._pickRandom(), value, -50, 0)
+                        projectile.setFlag(SpriteFlag.GhostThroughWalls, true)
+                        projectile.setFlag(SpriteFlag.AutoDestroy, true)
+                        music.play(music.melodyPlayable(music.pewPew), music.PlaybackMode.InBackground)
+                        value.sayText("Haha!", 200, false)
+                    }
+                },
+                500,
+            ),
+        ]
+    }
+
+    static resetHandlers() {
+        controller.A.onEvent(ControllerButtonEvent.Pressed, ILikeBooksGame.onA)
+        info.onLifeZero(ILikeBooksGame.onLifeZero)
+    }
+
+    static stop(win: boolean) {
+        ILikeBooksGame.stopIntervals()
+        ILikeBooksGame.destroyAllSprites()
+        ILikeBooksGame.resetHandlers()
+        ILikeBooksGame.callback(win)
+    }
+
+    static start(
+        onA: () => void,
+        onLifeZero: () => void,
+        callback: (w: boolean) => void,
+    ) {
+        ILikeBooksGame.onA = onA
+        ILikeBooksGame.onLifeZero = onLifeZero
+        ILikeBooksGame.callback = callback
+
+        scene.setBackgroundColor(0)
+        tiles.setCurrentTilemap(tilemap`emptyLevel`)
+        ILikeBooksGame.intro()
+        info.setLife(10)
+        tiles.setCurrentTilemap(tilemap`healthyLiving01`)
+        ILikeBooksGame.mySprite = ILikeBooksGame.newPlayer()
+        ILikeBooksGame.furnishHouse()
+
+        for (let index = 0; index < ILikeBooksGame.NUM_ENEMIES; index++) {
+            ILikeBooksGame.newEnemy()
+        }
+
+        ILikeBooksGame.intervals = ILikeBooksGame.startIntervals()
+
+        controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
+            const temp: StatusBarSprite =
+                statusbars.getStatusBarAttachedTo(
+                    StatusBarKind.Magic,
+                    ILikeBooksGame.mySprite,
+                )
+
+            if (temp.value == temp.max) {
+                ILikeBooksGame.throwMissile(ILikeBooksGame.mySprite)
+            }
+        })
+
+        info.onLifeZero(() => ILikeBooksGame.stop(false))
+
+        sprites.onOverlap(ILikeBooksGame.Kind.Player, ILikeBooksGame.Kind.Projectile, function (sprite, otherSprite) {
+            sprites.destroy(otherSprite, effects.smiles, 200)
+            info.changeLifeBy(-1)
+            music.play(music.melodyPlayable(music.thump), music.PlaybackMode.InBackground)
+        })
+    }
+}
+
+class HaterHuntGame {
+    static EMPTY_TILE: Image = assets.image`emptyTile`
+    static HATER_HUNT_LEVEL: number = 1
+    static CONFRONT_SELLER_LEVEL: number = 4
+    static ZEN_POWERUP_LEVEL: number = 5
+    static STEADFAST_POWERUP_LEVEL: number = 6
+    static RAGE_POWERUP_LEVEL: number = 7
+    static FIRST_LABYRINTH_LEVEL: number = 8
+
+    static Kind = {
+        _START: SpriteKind.create(),
+        Player: SpriteKind.create(),
+        Enemy: SpriteKind.create(),
+        Neutral: SpriteKind.create(),
+        Device: SpriteKind.create(),
+        HomelessBox: SpriteKind.create(),
+        Objective: SpriteKind.create(),
+        Competitor: SpriteKind.create(),
+        Helpful: SpriteKind.create(),
+        Unhelpful: SpriteKind.create(),
+        Collectible: SpriteKind.create(),
+        BottleSeller: SpriteKind.create(),
+        _LENGTH: SpriteKind.create(),
+    }
+
+    static mySprite: Sprite = null
+    static someGuy: Sprite = null
+    static rudeSign: Sprite = null
+    static bystander: Sprite = null
+    static intervals: number[] = []
+    static courseIntervals: number[] = []
+    static interval_rageTremor: number = -1
+    static tilemaps: tiles.TileMapData[]
+    static haterHuntTilemaps: tiles.TileMapData[] = []
+    static chestMutex: boolean = false
+    static doorSignal: number = 0
+    static racing: boolean = false
+    static gameStart: boolean = false
+    static gameEnded: boolean = false
+    static nextCourseMutex: boolean = false
+    static interactMutex: boolean = false
+    static hasHaterAde: boolean = false
+    static urTooSlow: boolean = false
+    static zen: boolean = false
+    static steadfast: boolean = false
+    static hasStanRage: boolean = false
+    static uncontrolledRage: boolean = false
+    static mySpeed: number = 0
+
+    static prevScore: number
+    static onA: () => void
+    static onB: () => void
+    static onCountdownEnd: () => void
+    static callback: (w: boolean, s: number) => void
+
+    static newGuy() {
+        HaterHuntGame.rudeSign = sprites.create(assets.image`rudeSign`, HaterHuntGame.Kind.Neutral)
+        HaterHuntGame.rudeSign.setFlag(SpriteFlag.GhostThroughWalls, true)
+        HaterHuntGame.someGuy = sprites.create(assets.image`kPopHater`, HaterHuntGame.Kind.Neutral)
+    }
+
+    static newRacer(headStart: boolean) {
+        controller.moveSprite(HaterHuntGame.mySprite, 0, 0)
+        HaterHuntGame.newGuy()
+        tiles.placeOnRandomTile(HaterHuntGame.someGuy, sprites.dungeon.collectibleInsignia)
+
+        if (HaterHuntGame.urTooSlow) {
+            const path = scene.aStar(
+                HaterHuntGame.someGuy.tilemapLocation(),
+                tiles.getTilesByType(sprites.castle.tileDarkGrass3)._pickRandom(),
+            )
+
+            tiles.placeOnTile(
+                HaterHuntGame.someGuy,
+                path[Math.floor(path.length * 0.2)],
+            )
+        }
+
+        HaterHuntGame.followRacePath(HaterHuntGame.someGuy, sprites.castle.tileDarkGrass3, 0.75)
+        tiles.placeOnTile(
+            HaterHuntGame.rudeSign,
+            tiles.getTileLocation(
+                HaterHuntGame
+                    .someGuy
+                    .tilemapLocation()
+                    .column + 1,
+                HaterHuntGame
+                    .someGuy
+                    .tilemapLocation()
+                    .row - 0,
+            ),
+        )
+        HaterHuntGame.racing = true
+        info.startCountdown(headStart ? 5 : 0.5)
+    }
+
+    static followRacePath(
+        sprite: Sprite,
+        endTile: Image,
+        speedFactor: number,
+    ): boolean {
+        const path = scene.aStar(
+            sprite.tilemapLocation(),
+            tiles.getTilesByType(endTile)._pickRandom(),
+        )
+
+        if (!path) {
+            return false
+        }
+
+        if (path.length > 2 && Math.abs(path[0].col - path[1].col) + Math.abs(path[0].row - path[1].row) !== 2) {
+            path.removeAt(0)
+        }
+
+        if (path.length === 0) {
+            return false
+        }
+
+        scene._followPath(sprite, path, speedFactor * HaterHuntGame.mySpeed)
+        return true
+    }
+
+    static newPlayer(startingTile: Image, neutral: boolean = true) {
+        const sprite = sprites.create(img`
+            . f f f . f f f f . f f f .
+            f f f f f c c c c f f f f f
+            f f f f b c c c c b f f f f
+            f f f c 3 c c c c 3 c f f f
+            . f 3 3 c c c c c c 3 3 f .
+            . f c c c c 4 4 c c c c f .
+            . f f c c 4 4 4 4 c c f f .
+            . f f f b f 4 4 f b f f f .
+            . f f 4 1 f d d f 1 4 f f .
+            . . f f d d d d d d f f . .
+            . . e f e 4 4 4 4 e f e . .
+            . e 4 f b 3 3 3 3 b f 4 e .
+            . 4 d f 3 3 3 3 3 3 c d 4 .
+            . 4 4 f 6 6 6 6 6 6 f 4 4 .
+            . . . . f f f f f f . . . .
+            . . . . f f . . f f . . . .
+        `, neutral
+            ? HaterHuntGame.Kind.Neutral
+            : HaterHuntGame.Kind.Player
+        )
+        sprite.setImage(assets.image`kPopStanEnraged`)
+        scene.cameraFollowSprite(sprite)
+        tiles.placeOnRandomTile(sprite, startingTile)
+
+        if (HaterHuntGame.hasStanRage) {
+            HaterHuntGame.attachStanRageMagic(sprite)
+        }
+
+        controller.moveSprite(sprite, HaterHuntGame.mySpeed, HaterHuntGame.mySpeed)
+        return sprite
+    }
+
+    static destroyEnemy() {
+        HaterHuntGame.someGuy.destroy()
+        HaterHuntGame.rudeSign.destroy()
+    }
+
+    static labyrinthIntro() {
+        timer.after(100, function () {
+            game.showLongText("RUN!", DialogLayout.Bottom)
+            game.showLongText("WHILE YOU STILL CAN!", DialogLayout.Bottom)
+            game.showLongText("EVERY MAN", DialogLayout.Bottom)
+            game.showLongText("FOR HIMSEEEEEEEEEEEEEEEELF!", DialogLayout.Bottom)
+        })
+    }
+
+    static init() {
+        scene.setBackgroundColor(13)
+        scene.setBackgroundImage(null)
+        HaterHuntGame.gameStart = false
+        HaterHuntGame.gameEnded = false
+        HaterHuntGame.racing = false
+        HaterHuntGame.chestMutex = false
+        HaterHuntGame.nextCourseMutex = false
+        HaterHuntGame.interactMutex = false
+        HaterHuntGame.hasHaterAde = false
+        HaterHuntGame.urTooSlow = false
+        HaterHuntGame.zen = false
+        HaterHuntGame.steadfast = false
+        HaterHuntGame.hasStanRage = false
+        HaterHuntGame.uncontrolledRage = false
+        HaterHuntGame.doorSignal = 0
+        HaterHuntGame.mySpeed = 100
+        info.setScore(0)
+    }
+
+    static stopIntervals() {
+        for (const interval of HaterHuntGame.intervals) {
+            clearInterval(interval)
+        }
+    }
+
+    static attachRudeSign(sprite: Sprite, sign: Sprite) {
+        const loc = sprite.tilemapLocation()
+
+        if (!loc) {
+            return
+        }
+
+        tiles.placeOnTile(
+            sign,
+            tiles.getTileLocation(loc.col + 1, loc.row)
+        )
+    }
+
+    static shortIntervalProcess() {
+        if (info.score() < HaterHuntGame.ZEN_POWERUP_LEVEL) {
+            return
+        }
+
+        if (!HaterHuntGame.rudeSign || !HaterHuntGame.someGuy) {
+            return
+        }
+
+        HaterHuntGame.attachRudeSign(HaterHuntGame.someGuy, HaterHuntGame.rudeSign)
+
+        HaterHuntGame.rudeSign.vx = HaterHuntGame.someGuy.vx
+        HaterHuntGame.rudeSign.vy = HaterHuntGame.someGuy.vy
+
+        HaterHuntGame.rudeSign.x = HaterHuntGame.someGuy.x + 16
+        HaterHuntGame.rudeSign.y = HaterHuntGame.someGuy.y
+
+        if (sprites.allOfKind(HaterHuntGame.Kind.Player).length > 0) {
+            return
+        }
+
+        music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground)
+    }
+
+    static startLabyrinthIntervals() {
+        return [
+            setInterval(
+                () => {
+                    if (!HaterHuntGame.gameStart || sprites.allOfKind(HaterHuntGame.Kind.Player).length + sprites.allOfKind(HaterHuntGame.Kind.Competitor).length > 0) {
+                        return
+                    }
+
+                    HaterHuntGame.tryCollapseGround(tiles
+                        .getTilesByType(HaterHuntGame.EMPTY_TILE)
+                        ._pickRandom()
+                    )
+                },
+                50,
+            ),
+            setInterval(
+                () => {
+                    if (!HaterHuntGame.someGuy) {
+                        return
+                    }
+
+                    HaterHuntGame.followRacePath(HaterHuntGame.someGuy, sprites.castle.tileDarkGrass3, 0.75)
+                },
+                1000,
+            ),
+        ]
+    }
+    
+    static knockAway(sprite: Sprite, location: tiles.Location, say: string) {
+        const dummySprite = sprites.create(
+            HaterHuntGame.EMPTY_TILE,
+            HaterHuntGame.Kind.Neutral,
+        )
+
+        tiles.placeOnTile(dummySprite, location)
+        dummySprite.sayText(say, 2000, false)
+        scene.cameraShake(16, 2000)
+
+        timer.after(1000, () => {
+            music.play(music.melodyPlayable(music.bigCrash), music.PlaybackMode.InBackground)
+
+            for (let i = 0; i <= 5; ++i) {
+                sprite.setVelocity(
+                    randint(150, 200) * (randint(0, 1) * 2 - 1),
+                    randint(150, 200) * (randint(0, 1) * 2 - 1),
+                )
+
+                pause(500)
+            }
+        })
+    }
+
+    static tryCollapseGround(location: tiles.Location) {
+        if (!location || tiles.tileAtLocationEquals(location, sprites.dungeon.hazardLava1)) {
+            return
+        }
+
+        music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground)
+        tiles.setTileAt(location, sprites.dungeon.hazardLava1)
+        const dummySprite = sprites.create(
+            HaterHuntGame.EMPTY_TILE,
+            HaterHuntGame.Kind.Neutral,
+        )
+        dummySprite.lifespan = 1000
+        tiles.placeOnTile(dummySprite, location)
+        dummySprite.sayText("Run!")
+    }
+
+    static tunnelRandom(sprite: Sprite, location: tiles.Location) {
+        tiles.setTileAt(location, HaterHuntGame.EMPTY_TILE)
+        tiles.placeOnRandomTile(sprite, sprites.dungeon.doorOpenNorth)
+        tiles.setTileAt(location, sprites.dungeon.doorOpenNorth)
+        music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.InBackground)
+    }
+
+    static tunnelPuzzle(sprite: Sprite, location: tiles.Location) {
+        if (info.score() !== HaterHuntGame.ZEN_POWERUP_LEVEL) {
+            return
+        }
+
+        const start: tiles.Location = tiles.getTilesByType(sprites.dungeon.collectibleInsignia)[0]
+        let pair = [start.col, start.row]
+
+        switch (location.col * 1000 + location.row) {
+            case 13004:
+                pair = [2, 18]
+                break
+            case 2018:
+                pair = [13, 4]
+                break
+            case 17021:
+                pair = [1, 10]
+                break
+            case 21002:
+                pair = [21, 8]
+                break
+            case 1010:
+                pair = [17, 21]
+                break
+            case 6019:
+                pair = [11, 16]
+                break
+            case 11016:
+                pair = [6, 19]
+                break
+            case 21008:
+                pair = [21, 2]
+                break
+            case 21021:
+                pair = [3, 6]
+                break
+            case 3006:
+                pair = [21, 21]
+                break
+            default:
+                break
+        }
+
+        const first = pair[0]
+        const secnd = pair[1]
+        const first0 = pair.get(0)
+
+        tiles.placeOnTile(sprite, tiles.getTileLocation(pair[0], pair[1]))
+        music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.InBackground)
+    }
+
+    static destroyAllSprites() {
+        for (let i = HaterHuntGame.Kind._START; i <= HaterHuntGame.Kind._LENGTH; ++i) {
+            sprites.destroyAllSpritesOfKind(i)
+        }
+    }
+
+    static setCourse(
+        tilemap: tiles.TileMapData,
+        headStart: boolean,
+    ) {
+        HaterHuntGame.gameStart = false
+        HaterHuntGame.doorSignal = 0
+        info.changeScoreBy(1)
+        HaterHuntGame.destroyAllSprites()
+        tiles.setCurrentTilemap(tilemap)
+        info.stopCountdown()
+
+        // todo: consider removing
+        if (Math.percentChance(0.01))
+            scene.setBackgroundImage(
+                assets.image`toddHowardSittingAcross`
+            )
+
+        scene.setBackgroundImage(null)
+
+        if (Math.percentChance(1)) {
+            scene.setBackgroundImage(assets.image`toddHowardJumpscare`)
+
+            for (const tile of tiles.getTilesByType(sprites.builtin.forestTiles0)) {
+                tiles.setTileAt(tile, assets.tile`toddHoward16_000`)
+            }
+        }
+
+        scene.setBackgroundColor(13)
+        HaterHuntGame.newComputer()
+        HaterHuntGame.newHomelessBox()
+        HaterHuntGame.mySprite = HaterHuntGame.newPlayer(sprites.dungeon.collectibleInsignia)
+        HaterHuntGame.newRacer(headStart)
+    }
+
+    static stopCourseIntervals() {
+        for (const interval of HaterHuntGame.courseIntervals) {
+            clearInterval(interval)
+        }
+    }
+
+    static nextCourse() {
+        HaterHuntGame.stopCourseIntervals()
+
+        if (HaterHuntGame.gameEnded) {
+            return
+        }
+
+        if (HaterHuntGame.tilemaps.length === 0) {
+            HaterHuntGame.gameEnded = true
+            HaterHuntGame.stopIntervals()
+            HaterHuntGame.destroyAllSprites()
+            scene.cameraShake(null, 0)
+            effects.confetti.endScreenEffect()
+            HaterHuntGame.stop(true)
+            return
+        }
+
+        if (HaterHuntGame.haterHuntTilemaps.length > 0) {
+            HaterHuntGame.startCourseHaterHunt(HaterHuntGame.haterHuntTilemaps.pop())
+            return
+        }
+
+        if (info.score() === HaterHuntGame.CONFRONT_SELLER_LEVEL - 1) {
+            HaterHuntGame.startCourseConfrontBottleSeller()
+            return
+        }
+
+        if (info.score() === HaterHuntGame.ZEN_POWERUP_LEVEL - 1) {
+            HaterHuntGame.startCourseZenChallenge()
+            return
+        }
+
+        if (info.score() === HaterHuntGame.STEADFAST_POWERUP_LEVEL - 1) {
+            HaterHuntGame.startCourseSteadfastChallenge()
+            return
+        }
+
+        if (info.score() === HaterHuntGame.RAGE_POWERUP_LEVEL - 1) {
+            HaterHuntGame.startCourseRageChallenge()
+            return
+        }
+
+        HaterHuntGame.setCourse(HaterHuntGame.tilemaps.pop(), info.score() === 0)
+
+        if (HaterHuntGame.tilemaps.length > 0) {
+            for (const tile of tiles.getTilesByType(sprites.castle.tileDarkGrass3)) {
+                tiles.setTileAt(tile, assets.tile`nextCourseDoor`)
+            }
+        }
+
+        if (info.score() === HaterHuntGame.FIRST_LABYRINTH_LEVEL) {
+            HaterHuntGame.labyrinthIntro()
+
+            for (const interval of HaterHuntGame.startLabyrinthIntervals()) {
+                HaterHuntGame.intervals.push(interval)
+            }
+
+            scene.onOverlapTile(HaterHuntGame.Kind.Competitor, assets.tile`nextCourseDoor`, function (sprite, location) {
+                timer.after(100, () => {
+                    HaterHuntGame.destroyEnemy()
+                    HaterHuntGame.urTooSlow = true
+                    music.play(music.melodyPlayable(music.baDing), music.PlaybackMode.InBackground)
+                })
+            })
+            scene.onOverlapTile(HaterHuntGame.Kind.Competitor, HaterHuntGame.EMPTY_TILE, function (sprite, location) {
+                const currentLevel = info.score()
+
+                timer.after(7000, function () {
+                    if (currentLevel !== info.score()) {
+                        return
+                    }
+
+                    HaterHuntGame.tryCollapseGround(location)
+                })
+            })
+
+            return
+        }
+    }
+
+    static newComputer() {
+        for (const location of tiles.getTilesByType(sprites.swamp.swampTile16)) {
+            tiles.placeOnTile(sprites.create(img`
+                . . . b b b b b b b b b . . . .
+                . . b 1 d d d d d d d 1 b . . .
+                . b 1 1 1 1 1 1 1 1 1 1 1 b . .
+                . b d b c c c c c c c b d b . .
+                . b d c 6 6 6 6 6 6 6 c d b . .
+                . b d c 6 d 6 6 6 6 6 c d b . .
+                . b d c 6 6 6 6 6 6 6 c d b . .
+                . b d c 6 6 6 6 6 6 6 c d b . .
+                . b d c 6 6 6 6 6 6 6 c d b . .
+                . b d c c c c c c c c c d b . .
+                . c b b b b b b b b b b b c . .
+                c b c c c c c c c c c c c b c .
+                c 1 d d d d d d d d d d d 1 c .
+                c 1 d 1 1 d 1 1 d 1 1 d 1 1 c .
+                c b b b b b b b b b b b b b c .
+                c c c c c c c c c c c c c c c .
+            `, HaterHuntGame.Kind.Device), location)
+            tiles.setTileAt(location, HaterHuntGame.EMPTY_TILE)
+        }
+    }
+
+    static newHomelessBox() {
+        tiles.placeOnRandomTile(sprites.create(img`
+            . . b b b b b b b b b b b b . .
+            . b e 4 4 4 4 4 4 4 4 4 4 e b .
+            b e 4 4 4 4 4 4 4 4 4 4 4 4 e b
+            b e 4 4 4 4 4 4 4 4 4 4 4 4 e b
+            b e 4 4 4 4 4 4 4 4 4 4 4 4 e b
+            b e e 4 4 4 4 4 4 4 4 4 4 e e b
+            b e e e e e e e e e e e e e e b
+            b e e e e e e e e e e e e e e b
+            b b b b b b b d d b b b b b b b
+            c b b b b b b c c b b b b b b c
+            c c c c c c b c c b c c c c c c
+            b e e e e e c b b c e e e e e b
+            b e e e e e e e e e e e e e e b
+            b c e e e e e e e e e e e e c b
+            b b b b b b b b b b b b b b b b
+            . b b . . . . . . . . . . b b .
+        `, HaterHuntGame.Kind.HomelessBox), sprites.dungeon.chestClosed)
+    }
+
+    static startCourseHaterHunt(tilemap: tiles.TileMapData) {
+        HaterHuntGame.gameStart = false
+        HaterHuntGame.destroyAllSprites()
+        tiles.setCurrentTilemap(tilemap)
+
+        info.changeScoreBy(1)
+        scene.setBackgroundColor(13)
+        HaterHuntGame.newComputer()
+        HaterHuntGame.newHomelessBox()
+        HaterHuntGame.mySprite = HaterHuntGame.newPlayer(sprites.dungeon.collectibleInsignia, false)
+        HaterHuntGame.newGuy()
+        HaterHuntGame.someGuy.setKind(HaterHuntGame.Kind.Objective)
+        tiles.placeOnRandomTile(HaterHuntGame.someGuy, assets.tile`tileUtilobject4`)
+        HaterHuntGame.attachRudeSign(HaterHuntGame.someGuy, HaterHuntGame.rudeSign)
+        HaterHuntGame.bystander = sprites.create(img`
+            . . . . f f f f . . . .
+            . . f f e e e e f f . .
+            . f f e e e e e e f f .
+            f f f f 4 e e e f f f f
+            f f f 4 4 4 e e f f f f
+            f f f 4 4 4 4 e e f f f
+            f 4 e 4 4 4 4 4 4 e 4 f
+            f 4 4 f f 4 4 f f 4 4 f
+            f e 4 d d d d d d 4 e f
+            . f e d d b b d d e f .
+            . f f e 4 4 4 4 e f f .
+            e 4 f b 1 1 1 1 b f 4 e
+            4 d f 1 1 1 1 1 1 f d 4
+            4 4 f 6 6 6 6 6 6 f 4 4
+            . . . f f f f f f . . .
+            . . . f f . . f f . . .
+        `, HaterHuntGame.Kind.Unhelpful)
+        tiles.placeOnRandomTile(HaterHuntGame.bystander, assets.tile`tileUtilobject1`)
+
+        for (const image of [
+            assets.tile`tileUtilobject1`,
+            assets.tile`tileUtilobject4`,
+        ]) {
+            for (const tile of tiles.getTilesByType(image)) {
+                tiles.setTileAt(tile, HaterHuntGame.EMPTY_TILE)
+            }
+        }
+
+        HaterHuntGame.courseIntervals = [
+            setInterval(
+                () => {
+                    const sprite = sprites.create(
+                        assets.image`hater-ade`,
+                        HaterHuntGame.Kind.Collectible,
+                    )
+                    tiles.placeOnRandomTile(sprite, HaterHuntGame.EMPTY_TILE)
+                    sprite.sayText("Peekaboo!", 1000, false)
+                    sprite.lifespan = 4000
+                },
+                3000,
+            ),
+            setInterval(
+                () => {
+                    HaterHuntGame.bystander.setVelocity(0, 50)
+                    timer.after(1000, () => HaterHuntGame.bystander.setVelocity(0, -50))
+                },
+                2000,
+            ),
+        ]
+
+        if (HaterHuntGame.followRacePath(HaterHuntGame.someGuy, assets.tile`nextCourseDoor`, 0.75)) {
+            HaterHuntGame.courseIntervals.push(setInterval(() => HaterHuntGame.attachRudeSign(HaterHuntGame.someGuy, HaterHuntGame.rudeSign), 2))
+        }
+        else {
+            animation.runMovementAnimation(
+                HaterHuntGame.rudeSign,
+                animation.animationPresets(animation.bobbing),
+                500,
+                true,
+            )
+        }
+
+        const currentLevel = info.score()
+
+        sprites.onOverlap(HaterHuntGame.Kind.Player, HaterHuntGame.Kind.Collectible, function (sprite, otherSprite) {
+            if (currentLevel !== info.score()) {
+                return
+            }
+
+            HaterHuntGame.hasHaterAde = true
+            sprite.sayText("Hater-Ade Powerup!", 2000, false)
+            sprites.destroy(otherSprite)
+            controller.moveSprite(sprite, 200, 200)
+            music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.InBackground)
+            info.startCountdown(15)
+        })
+
+        scene.onOverlapTile(HaterHuntGame.Kind.Player, assets.tile`dirtTileRotate180`, function (sprite, location) {
+            if (currentLevel !== info.score()) {
+                return
+            }
+
+            tiles.setTileAt(location, HaterHuntGame.EMPTY_TILE)
+            HaterHuntGame.mySprite.sayText("There he is!", 1000, false)
+            HaterHuntGame.someGuy.sayText("Uh oh!", 1000, false)
+        })
+
+        scene.onOverlapTile(HaterHuntGame.Kind.Player, sprites.castle.tilePath5, function (sprite, location) {
+            if (currentLevel !== info.score()) {
+                return
+            }
+
+            tiles.setTileAt(location, HaterHuntGame.EMPTY_TILE)
+            HaterHuntGame.bystander.sayText("He's up there. Get'im.", 1000, false)
+        })
+
+        sprites.onOverlap(HaterHuntGame.Kind.Player, HaterHuntGame.Kind.Objective, function (sprite, otherSprite) {
+            if (HaterHuntGame.nextCourseMutex) {
+                return
+            }
+
+            HaterHuntGame.nextCourseMutex = true
+            controller.moveSprite(sprite, 0, 0)
+            const loc = otherSprite.tilemapLocation()
+            tiles.placeOnTile(sprite, tiles.getTileLocation(loc.col - 1, loc.row))
+            sprite.sayText("Listen, you little punk!")
+
+            timer.after(500, () => {
+                game.showLongText("Please don't hurt me!", DialogLayout.Bottom)
+                music.play(music.melodyPlayable(music.powerUp), music.PlaybackMode.InBackground)
+
+                timer.after(1000, () => {
+                    HaterHuntGame.nextCourseMutex = false
+                    HaterHuntGame.nextCourse()
+                })
+            })
+        })
+
+        sprites.onOverlap(HaterHuntGame.Kind.Player, HaterHuntGame.Kind.Unhelpful, function (sprite, otherSprite) {
+            scene.cameraShake(4, 500)
+            sprite.startEffect(effects.fire, 2000)
+            sprite.destroy(effects.disintegrate, 2000)
+            music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground)
+            timer.after(500, () => otherSprite.sayText("Uh oh. Don't do that.", 500, false))
+
+            timer.after(2000, () => {
+                effects.clearParticles(sprite)
+                HaterHuntGame.mySprite = HaterHuntGame.newPlayer(sprites.dungeon.collectibleInsignia, false)
+            })
+        })
+    }
+
+    static startCourseConfrontBottleSeller() {
+        HaterHuntGame.gameStart = false
+        HaterHuntGame.destroyAllSprites()
+        tiles.setCurrentTilemap(tilemap`haterHuntBottleSeller`)
+
+        info.changeScoreBy(1)
+        scene.setBackgroundColor(13)
+        HaterHuntGame.newComputer()
+        HaterHuntGame.newHomelessBox()
+
+        for (const tile of tiles.getTilesByType(assets.tile`tileUtilobject9`)) {
+            tiles.placeOnTile(
+                sprites.create(img`
+                    . . . f f f c c c . . . . .
+                    . f f 5 5 5 5 5 5 f f . . .
+                    . f 5 5 5 5 5 5 5 5 5 f . .
+                    f 5 5 5 5 5 5 5 5 5 5 5 c .
+                    f 5 5 b d 5 5 5 5 5 5 5 c .
+                    f 5 d 4 4 b 5 5 5 5 5 5 5 f
+                    f 5 b 4 4 4 c c 5 5 5 5 5 f
+                    f f f 4 4 c b c b 5 5 5 b f
+                    . f f d d c 1 e b b b b b c
+                    . . f d d d d 4 f b b b b c
+                    . . f 4 4 4 e e e 4 b b c .
+                    . . f 9 9 9 e d d 4 f f . .
+                    . . f 9 9 9 e d d e f . . .
+                    . f 3 3 b 3 b e e b f . . .
+                    . f f 3 b 3 b 3 b f f . . .
+                    . . . f f b b f f . . . . .
+                `, HaterHuntGame.Kind.BottleSeller),
+                tile,
+            )
+            tiles.setTileAt(tile, HaterHuntGame.EMPTY_TILE)
+        }
+
+        for (const tile of tiles.getTilesByType(assets.tile`tileUtilobject2`)) {
+            tiles.placeOnTile(
+                sprites.create(
+                    assets.image`hater-ade`,
+                    HaterHuntGame.Kind.Neutral,
+                ),
+                tile,
+            )
+            tiles.setTileAt(tile, HaterHuntGame.EMPTY_TILE)
+        }
+
+        HaterHuntGame.mySprite = HaterHuntGame.newPlayer(sprites.dungeon.collectibleInsignia, false)
+
+        sprites.onOverlap(HaterHuntGame.Kind.Player, HaterHuntGame.Kind.BottleSeller, function (sprite, otherSprite) {
+            if (HaterHuntGame.interactMutex) {
+                return
+            }
+
+            HaterHuntGame.interactMutex = true
+            controller.moveSprite(sprite, 0, 0)
+            const loc = otherSprite.tilemapLocation()
+            tiles.placeOnTile(
+                sprite,
+                tiles.getTileLocation(loc.col + 1, loc.row),
+            )
+
+            sprite.setImage(assets.image`kPopStanEnragedLeft`)
+
+            timer.after(100, () => {
+                game.showLongText("You!", DialogLayout.Top)
+
+                timer.after(100, () => {
+                    otherSprite.setImage(img`
+                        . . . . . c c c f f f . . .
+                        . . . f f 5 5 5 5 5 5 f f .
+                        . . f 5 5 5 5 5 5 5 5 5 f .
+                        . c 5 5 5 5 5 5 5 5 5 5 5 f
+                        . c 5 5 5 5 5 5 5 d b 5 5 f
+                        f 5 5 5 5 5 5 5 b 4 4 d 5 f
+                        f 5 5 5 5 5 c c 4 4 4 b 5 f
+                        f b 5 5 5 b c b c 4 4 f f f
+                        c b b b b b e 1 c d d f f .
+                        c b b b b f 4 d d d d f . .
+                        . c b b 4 e e e 4 4 4 f . .
+                        . . f f 4 d d e 9 9 9 f . .
+                        . . . f e d d e 9 9 9 f . .
+                        . . . f b e e b 3 b 3 3 f .
+                        . . . f f b 3 b 3 b 3 f f .
+                        . . . . . f f b b f f . . .
+                    `)
+
+                    game.showLongText("Oh, hello. Want to try a free sample?", DialogLayout.Bottom)
+                    game.showLongText("Stop leaving your stupid bottles everywhere!", DialogLayout.Top)
+                    game.showLongText("Uhh.", DialogLayout.Bottom)
+                    game.showLongText("They aren't mine.", DialogLayout.Bottom)
+
+                    timer.after(100, () => {
+                        sprite.setImage(assets.image`kPopStanEnraged`)
+                        controller.moveSprite(sprite, HaterHuntGame.mySpeed, HaterHuntGame.mySpeed)
+                        tiles.setTileAt(
+                            tiles.getTileLocation(9, 14),
+                            assets.tile`nextCourseDoor`,
+                        )
+                        music.play(music.melodyPlayable(music.baDing), music.PlaybackMode.InBackground)
+                        HaterHuntGame.interactMutex = false
+                    })
+                })
+            })
+        })
+    }
+
+    static startCourseZenChallenge() {
+        HaterHuntGame.gameStart = false
+        HaterHuntGame.destroyAllSprites()
+        tiles.setCurrentTilemap(tilemap`haterHuntZen`)
+
+        info.changeScoreBy(1)
+        scene.setBackgroundColor(13)
+        HaterHuntGame.newComputer()
+        HaterHuntGame.newHomelessBox()
+        HaterHuntGame.mySprite = HaterHuntGame.newPlayer(sprites.dungeon.collectibleInsignia, false)
+
+        const collectible = sprites.create(
+            assets.image`zenEmote`,
+            HaterHuntGame.Kind.Collectible,
+        )
+
+        tiles.placeOnRandomTile(collectible, sprites.dungeon.darkGroundCenter)
+        animation.runMovementAnimation(collectible, animation.animationPresets(animation.bobbing), 2000, true)
+
+        const currentLevel = info.score()
+
+        sprites.onOverlap(HaterHuntGame.Kind.Player, HaterHuntGame.Kind.Collectible, function (sprite, otherSprite) {
+            if (currentLevel !== info.score()) {
+                return
+            }
+
+            otherSprite.destroy(effects.smiles, 500)
+            music.play(music.melodyPlayable(music.powerUp), music.PlaybackMode.InBackground)
+            clearInterval(HaterHuntGame.interval_rageTremor)
+
+            timer.after(500, () => {
+                game.showLongText("Zen", DialogLayout.Bottom)
+                game.showLongText("Be still, my child.", DialogLayout.Bottom)
+                game.showLongText("Let the calm waves wash over you.", DialogLayout.Bottom)
+                game.showLongText("No more tremors.", DialogLayout.Bottom)
+                HaterHuntGame.zen = true
+            })
+        })
+    }
+
+    static startCourseSteadfastChallenge() {
+        HaterHuntGame.gameStart = false
+        HaterHuntGame.destroyAllSprites()
+        tiles.setCurrentTilemap(tilemap`haterHuntSteadfast`)
+
+        info.changeScoreBy(1)
+        scene.setBackgroundColor(13)
+        HaterHuntGame.newComputer()
+        HaterHuntGame.newHomelessBox()
+        HaterHuntGame.mySprite = HaterHuntGame.newPlayer(sprites.dungeon.collectibleInsignia, false)
+        HaterHuntGame.newGuy()
+        HaterHuntGame.someGuy.setKind(HaterHuntGame.Kind.Competitor)
+        tiles.placeOnTile(HaterHuntGame.someGuy, tiles.getTileLocation(12, 12))
+        HaterHuntGame.followRacePath(HaterHuntGame.someGuy, assets.tile`nextCourseDoor`, 0.75)
+
+        tiles.placeOnTile(sprites.create(
+            img`
+                . . . . f f f f . . . .
+                . . f f e e e e f f . .
+                . f f e e e e e e f f .
+                f f f f 4 e e e f f f f
+                f f f 4 4 4 e e f f f f
+                f f f 4 4 4 4 e e f f f
+                f 4 e 4 4 4 4 4 4 e 4 f
+                f 4 4 f f 4 4 f f 4 4 f
+                f e 4 d d d d d d 4 e f
+                . f e d d b b d d e f .
+                . f f e 4 4 4 4 e f f .
+                e 4 f b 1 1 1 1 b f 4 e
+                4 d f 1 1 1 1 1 1 f d 4
+                4 4 f 6 6 6 6 6 6 f 4 4
+                . . . f f f f f f . . .
+                . . . f f . . f f . . .
+            `, HaterHuntGame.Kind.Helpful,
+        ), tiles.getTileLocation(14, 27))
+
+        const collectible = sprites.create(
+            assets.image`harumphEmote`,
+            HaterHuntGame.Kind.Collectible,
+        )
+
+        tiles.placeOnRandomTile(collectible, sprites.dungeon.darkGroundCenter)
+        animation.runMovementAnimation(collectible, animation.animationPresets(animation.bobbing), 2000, true)
+
+        const currentLevel = info.score()
+
+        sprites.onOverlap(HaterHuntGame.Kind.Player, HaterHuntGame.Kind.Helpful, function (sprite, otherSprite) {
+            if (currentLevel !== info.score()) {
+                return
+            }
+
+            tiles.placeOnTile(
+                sprite,
+                tiles.getTileLocation(
+                    otherSprite.tilemapLocation().col + 1,
+                    otherSprite.tilemapLocation().row,
+                ),
+            )
+
+            controller.moveSprite(sprite, 0, 0)
+
+            timer.after(100, () => {
+                game.showLongText("That guy?", DialogLayout.Bottom)
+                game.showLongText("He was just here a few minutes ago.", DialogLayout.Bottom)
+                game.showLongText("What's your problem with him anyway?", DialogLayout.Bottom)
+                controller.moveSprite(sprite, HaterHuntGame.mySpeed, HaterHuntGame.mySpeed)
+            })
+        })
+
+        sprites.onOverlap(HaterHuntGame.Kind.Player, HaterHuntGame.Kind.Collectible, function (sprite, otherSprite) {
+            if (currentLevel !== info.score()) {
+                return
+            }
+
+            otherSprite.destroy(effects.smiles, 500)
+            music.play(music.melodyPlayable(music.powerUp), music.PlaybackMode.InBackground)
+
+            timer.after(500, () => {
+                game.showLongText("Steadfastness", DialogLayout.Bottom)
+                game.showLongText("You're steadfast now.", DialogLayout.Bottom)
+                game.showLongText("That means you're impervious to trees.", DialogLayout.Bottom)
+                game.showLongText("So you can stop going back to the computer.", DialogLayout.Bottom)
+                game.showLongText("Just stop freaking out about trees.", DialogLayout.Bottom)
+                game.showLongText("They're just trees.", DialogLayout.Bottom)
+                HaterHuntGame.steadfast = true
+            })
+        })
+
+        scene.onOverlapTile(HaterHuntGame.Kind.Competitor, assets.tile`nextCourseDoor`, function (sprite, location) {
+            if (currentLevel !== info.score()) {
+                return
+            }
+
+            timer.after(100, () => {
+                HaterHuntGame.destroyEnemy()
+            })
+        })
+    }
+
+    static startCourseRageChallenge() {
+        HaterHuntGame.gameStart = false
+        HaterHuntGame.destroyAllSprites()
+        tiles.setCurrentTilemap(tilemap`haterHuntStanRage`)
+
+        info.changeScoreBy(1)
+        scene.setBackgroundColor(13)
+        HaterHuntGame.newComputer()
+        HaterHuntGame.newHomelessBox()
+        HaterHuntGame.mySprite = HaterHuntGame.newPlayer(sprites.dungeon.collectibleInsignia, false)
+
+        tiles.placeOnTile(sprites.create(
+            img`
+                . . . . f f f f . . . .
+                . . f f e e e e f f . .
+                . f f e e e e e e f f .
+                f f f f 4 e e e f f f f
+                f f f 4 4 4 e e f f f f
+                f f f 4 4 4 4 e e f f f
+                f 4 e 4 4 4 4 4 4 e 4 f
+                f 4 4 f f 4 4 f f 4 4 f
+                f e 4 d d d d d d 4 e f
+                . f e d d b b d d e f .
+                . f f e 4 4 4 4 e f f .
+                e 4 f b 1 1 1 1 b f 4 e
+                4 d f 1 1 1 1 1 1 f d 4
+                4 4 f 6 6 6 6 6 6 f 4 4
+                . . . f f f f f f . . .
+                . . . f f . . f f . . .
+            `, HaterHuntGame.Kind.Helpful,
+        ), tiles.getTileLocation(13, 15))
+
+        const collectible = sprites.create(
+            assets.image`rageEmote`,
+            HaterHuntGame.Kind.Collectible,
+        )
+
+        tiles.placeOnRandomTile(collectible, sprites.dungeon.darkGroundCenter)
+        animation.runMovementAnimation(collectible, animation.animationPresets(animation.bobbing), 2000, true)
+
+        const currentLevel = info.score()
+
+        sprites.onOverlap(HaterHuntGame.Kind.Player, HaterHuntGame.Kind.Helpful, function (sprite, otherSprite) {
+            if (currentLevel !== info.score()) {
+                return
+            }
+
+            tiles.placeOnTile(
+                sprite,
+                tiles.getTileLocation(
+                    otherSprite.tilemapLocation().col + 1,
+                    otherSprite.tilemapLocation().row,
+                ),
+            )
+
+            controller.moveSprite(sprite, 0, 0)
+
+            timer.after(100, () => {
+                game.showLongText("He went that way.", DialogLayout.Bottom)
+                game.showLongText("THAT way. I'm pointing.", DialogLayout.Bottom)
+                controller.moveSprite(sprite, HaterHuntGame.mySpeed, HaterHuntGame.mySpeed)
+            })
+        })
+
+        sprites.onOverlap(HaterHuntGame.Kind.Player, HaterHuntGame.Kind.Collectible, function (sprite, otherSprite) {
+            if (currentLevel !== info.score()) {
+                return
+            }
+
+            otherSprite.destroy(effects.smiles, 500)
+            music.play(music.melodyPlayable(music.powerUp), music.PlaybackMode.InBackground)
+
+            timer.after(500, () => {
+                game.showLongText("You have Stan Rage Power!", DialogLayout.Bottom)
+                game.showLongText("Prove you are a true stan!", DialogLayout.Bottom)
+                game.showLongText("Press 'B' when the meter is full to destroy obstacles in your way!", DialogLayout.Bottom)
+                HaterHuntGame.attainStanRagePower(HaterHuntGame.mySprite)
+            })
+        })
+    }
+
+    static setHandlers() {
+        scene.onHitWall(HaterHuntGame.Kind.Player, function (sprite, location) {
+            sprite.sayText("AAAAGH! A TREE!", 500, true)
+
+            if (HaterHuntGame.steadfast) {
+                scene.cameraShake(Math.percentChance(30) ? 32 : 8, 500)
+                music.play(music.melodyPlayable(music.bigCrash), music.PlaybackMode.InBackground)
+                controller.moveSprite(sprite, HaterHuntGame.mySpeed / 2, HaterHuntGame.mySpeed / 2)
+                timer.after(500, function () {
+                    controller.moveSprite(sprite, HaterHuntGame.mySpeed, HaterHuntGame.mySpeed)
+                })
+
+                return
+            }
+
+            tiles.placeOnRandomTile(sprite, sprites.dungeon.collectibleInsignia)
+            scene.cameraShake(4, 500)
+            music.play(music.melodyPlayable(music.bigCrash), music.PlaybackMode.InBackground)
+        })
+
+        controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
+            if (HaterHuntGame.doorSignal === 0) {
+                return
+            }
+
+            HaterHuntGame.doorSignal = 2
+        })
+
+        info.onCountdownEnd(function () {
+            if (HaterHuntGame.hasHaterAde) {
+                controller.moveSprite(HaterHuntGame.mySprite, 100, 100)
+                HaterHuntGame.hasHaterAde = false
+                return
+            }
+
+            if (!HaterHuntGame.racing) {
+                game.setGameOverMessage(false, "You did it!")
+                return
+            }
+
+            HaterHuntGame.someGuy.setKind(HaterHuntGame.Kind.Competitor)
+            HaterHuntGame.mySprite.setKind(HaterHuntGame.Kind.Player)
+            controller.moveSprite(HaterHuntGame.mySprite, HaterHuntGame.mySpeed, HaterHuntGame.mySpeed)
+            HaterHuntGame.racing = false
+            HaterHuntGame.gameStart = true
+            info.startCountdown(70)
+        })
+
+        scene.onOverlapTile(HaterHuntGame.Kind.Objective, assets.tile`nextCourseDoor`, function (sprite, location) {
+            timer.after(100, () => HaterHuntGame.destroyEnemy())
+        })
+
+        scene.onOverlapTile(HaterHuntGame.Kind.Player, assets.tile`nextCourseDoor`, function (sprite, location) {
+            sprite.setKind(HaterHuntGame.Kind.Neutral)
+
+            if (info.score() === HaterHuntGame.FIRST_LABYRINTH_LEVEL - 1) {
+                HaterHuntGame.labyrinthSplash(() => HaterHuntGame.nextCourse())
+                return
+            }
+
+            timer.after(100, () => HaterHuntGame.nextCourse())
+        })
+
+        scene.onOverlapTile(HaterHuntGame.Kind.Player, sprites.castle.tileDarkGrass3, function (sprite, location) {
+            HaterHuntGame.touchGrass(sprite, location)
+        })
+
+        scene.onOverlapTile(HaterHuntGame.Kind.Player, sprites.dungeon.chestClosed, function (sprite, location) {
+            if (HaterHuntGame.chestMutex) {
+                return
+            }
+
+            if (Math.percentChance(20)) {
+                HaterHuntGame.knockAway(sprite, location, "GET OFF ME, YOU IDIOT!")
+                return
+            }
+
+            HaterHuntGame.chestMutex = true
+            timer.after(2000, function () {
+                HaterHuntGame.chestMutex = false
+            })
+        })
+
+        scene.onOverlapTile(HaterHuntGame.Kind.Player, sprites.dungeon.hazardLava1, function (sprite, location) {
+            sprites.destroy(sprite, effects.disintegrate, 500)
+            sprite.sayText("AAAAAAAH!")
+            timer.after(1000, function () {
+                HaterHuntGame.stop(false)
+            })
+        })
+
+        scene.onOverlapTile(HaterHuntGame.Kind.Player, sprites.dungeon.floorLight5, function (sprite, location) {
+            if (HaterHuntGame.uncontrolledRage) {
+                return
+            }
+
+            HaterHuntGame.uncontrolledRage = true
+
+            timer.after(500, () => {
+                controller.moveSprite(HaterHuntGame.mySprite, 0, 0)
+
+                timer.after(500, () => {
+                    HaterHuntGame.mySprite.sayText("!", 500, false)
+
+                    timer.after(500, () => {
+                        scene.cameraShake(16, 1000)
+                        music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground)
+                        music.play(music.melodyPlayable(music.bigCrash), music.PlaybackMode.InBackground)
+
+                        for (let col = 16; col <= 22; ++col) {
+                            const tile = tiles.getTileLocation(col, 31)
+                            tiles.setTileAt(tile, sprites.dungeon.hazardLava1)
+                            tiles.setWallAt(tile, true)
+                        }
+
+                        timer.after(500, () => {
+                            HaterHuntGame.mySprite.sayText("Uh oh.", 500, false)
+                            controller.moveSprite(HaterHuntGame.mySprite, HaterHuntGame.mySpeed, HaterHuntGame.mySpeed)
+
+                            scene.onOverlapTile(HaterHuntGame.Kind.Player, HaterHuntGame.EMPTY_TILE, function (sprite, location) {
+                                const currentLevel = info.score()
+
+                                timer.after(2000, function () {
+                                    if (currentLevel !== info.score()) {
+                                        return
+                                    }
+
+                                    HaterHuntGame.tryCollapseGround(location)
+                                })
+                            })
+                            scene.onOverlapTile(HaterHuntGame.Kind.Player, sprites.dungeon.collectibleInsignia, function (sprite, location) {
+                                const currentLevel = info.score()
+
+                                timer.after(2000, function () {
+                                    if (currentLevel !== info.score()) {
+                                        return
+                                    }
+
+                                    HaterHuntGame.tryCollapseGround(location)
+                                })
+                            })
+                        })
+                    })
+                })
+            })
+        })
+
+        scene.onOverlapTile(HaterHuntGame.Kind.Competitor, sprites.castle.tileDarkGrass3, function (sprite, location) {
+            if (sprites.allOfKind(HaterHuntGame.Kind.Player).length > 0) {
+                return
+            }
+            timer.after(750, function () {
+                sprite.sayText("Ahh. Finally.", 1000, false)
+                timer.after(1500, function () {
+                    music.play(music.melodyPlayable(music.smallCrash), music.PlaybackMode.InBackground)
+                    sprite.destroy(effects.disintegrate, 1000)
+                    HaterHuntGame.rudeSign.destroy(effects.disintegrate, 1000)
+                })
+                timer.after(3000, () => {
+                    HaterHuntGame.nextCourse()
+                })
+            })
+        })
+
+        scene.onOverlapTile(HaterHuntGame.Kind.Player, sprites.dungeon.doorOpenNorth, function (sprite, location) {
+            if (HaterHuntGame.doorSignal == 2) {
+                if (info.score() === HaterHuntGame.ZEN_POWERUP_LEVEL) {
+                    HaterHuntGame.tunnelPuzzle(sprite, location)
+                }
+                else {
+                    HaterHuntGame.tunnelRandom(sprite, location)
+                }
+
+                HaterHuntGame.doorSignal = 0
+                return
+            }
+
+            HaterHuntGame.doorSignal = 1
+            sprite.sayText("Press 'A' to tunnel", 500, false)
+        })
+
+        sprites.onOverlap(HaterHuntGame.Kind.Player, HaterHuntGame.Kind.Device, function (sprite, otherSprite) {
+            const loc = otherSprite.tilemapLocation()
+            tiles.placeOnTile(sprite, tiles.getTileLocation(loc.col, loc.row + 1))
+            music.play(music.createSong(assets.song`pcBoot`), music.PlaybackMode.InBackground)
+        })
+
+        sprites.onOverlap(HaterHuntGame.Kind.Player, HaterHuntGame.Kind.Competitor, function (sprite, otherSprite) {
+            otherSprite.sayText("AAAAAAH!", 500, false)
+            music.play(music.melodyPlayable(music.bigCrash), music.PlaybackMode.InBackground)
+            scene.cameraShake(8, 500)
+            controller.moveSprite(sprite, 0, 0)
+            sprite.startEffect(effects.spray)
+            timer.after(1000, function () {
+                controller.moveSprite(sprite, HaterHuntGame.mySpeed, HaterHuntGame.mySpeed)
+                effects.clearParticles(sprite)
+            })
+        })
+
+        sprites.onOverlap(HaterHuntGame.Kind.Player, HaterHuntGame.Kind.HomelessBox, function (sprite, otherSprite) {
+            otherSprite.sayText("Leave me alone.", 500, false)
+            music.play(music.melodyPlayable(music.buzzer), music.PlaybackMode.InBackground)
+        })
+
+        sprites.onOverlap(HaterHuntGame.Kind.Player, HaterHuntGame.Kind.Enemy, function (sprite, otherSprite) {
+            tiles.placeOnRandomTile(sprite, sprites.dungeon.collectibleInsignia)
+            tiles.placeOnRandomTile(otherSprite, sprites.dungeon.doorOpenNorth)
+        })
+    }
+
+    static resetHandlers() {
+        controller.A.onEvent(ControllerButtonEvent.Pressed, HaterHuntGame.onA)
+        controller.B.onEvent(ControllerButtonEvent.Pressed, HaterHuntGame.onB)
+        info.onCountdownEnd(HaterHuntGame.onCountdownEnd)
+    }
+
+    static stop(win: boolean) {
+        const endingScore = info.score() - 1
+        info.setScore(HaterHuntGame.prevScore)
+        info.stopCountdown()
+        HaterHuntGame.stopIntervals()
+        HaterHuntGame.stopCourseIntervals()
+        HaterHuntGame.destroyAllSprites()
+        HaterHuntGame.resetHandlers()
+        HaterHuntGame.callback(win, endingScore)
+    }
+
+    static start(
+        onA: () => void,
+        onB: () => void,
+        onCountdownEnd: () => void,
+        callback: (w: boolean, s: number) => void,
+    ) {
+        HaterHuntGame.prevScore = info.score()
+        HaterHuntGame.onA = onA
+        HaterHuntGame.onB = onB
+        HaterHuntGame.onCountdownEnd = onCountdownEnd
+        HaterHuntGame.callback = callback
+        HaterHuntGame.init()
+
+        HaterHuntGame.tilemaps = [
+            tilemap`haterHunt06`,
+            tilemap`haterHunt07`,
+            tilemap`haterHunt08`,
+            tilemap`haterHunt09`,
+            tilemap`haterHunt10`,
+            tilemap`haterHunt11`,
+        ]
+
+        HaterHuntGame.haterHuntTilemaps = [
+            tilemap`haterHunt03`,
+            tilemap`haterHunt02`,
+            tilemap`haterHunt01`,
+        ]
+
+        HaterHuntGame.tilemaps.sort((a, b) => randint(-1, 1))
+        HaterHuntGame.interval_rageTremor = setInterval(() => HaterHuntGame.rageTremor(), 10000)
+        HaterHuntGame.intervals = [
+            setInterval(() => HaterHuntGame.shortIntervalProcess(), 2),
+        ]
+
+        HaterHuntGame.setHandlers()
+        HaterHuntGame.haterHuntSplash(() => HaterHuntGame.nextCourse())
+    }
+
+    static rageTremor() {
+        if (!HaterHuntGame.mySprite) {
+            return
+        }
+
+        HaterHuntGame.mySprite.sayText([
+            "Oh, he's gonna get it!",
+            "Threaten MY pastime!?",
+            "RAAAGE!",
+            "Who does he think he is?",
+            "Just wait til I get over there.",
+            "I'm gonna find him.",
+            "That punk...",
+            "I stan. I STAN! I STAAN!! RAAGH!!"
+        ]._pickRandom(), 1000, true)
+        music.play(music.createSong(hex`0078000408010106001c00010a006400f4016400000400000000000000000000000000000000020c0000000800011608000c000119`), music.PlaybackMode.InBackground)
+        animation.runMovementAnimation(
+            HaterHuntGame.mySprite,
+            animation.animationPresets(animation.shake),
+            200,
+            false
+        )
+    }
+
+    static attachStanRageMagic(sprite: Sprite) {
+        const statusbar = statusbars.create(20, 4, StatusBarKind.Magic)
+        statusbar.max = 10
+        statusbar.value = 0
+        statusbar.attachToSprite(sprite)
+    }
+
+    static attainStanRagePower(sprite: Sprite) {
+        HaterHuntGame.hasStanRage = true
+        HaterHuntGame.attachStanRageMagic(sprite)
+
+        const status = statusbars.getStatusBarAttachedTo(StatusBarKind.Magic, sprite)
+
+        if (status) {
+            status.value = Math.floor(status.max / 2)
+        }
+
+        HaterHuntGame.intervals.push(setInterval(
+            () => {
+                if (!HaterHuntGame.mySprite) {
+                    return
+                }
+
+                const status = statusbars.getStatusBarAttachedTo(StatusBarKind.Magic, HaterHuntGame.mySprite)
+
+                if (!status || status.value >= status.max) {
+                    return
+                }
+
+                status.value++
+            },
+            1000,
+        ))
+
+        controller.B.onEvent(ControllerButtonEvent.Pressed, function () {
+            const status = statusbars.getStatusBarAttachedTo(StatusBarKind.Magic, HaterHuntGame.mySprite)
+
+            if (!status || status.value < status.max) {
+                return
+            }
+
+            HaterHuntGame.mySprite.sayText("Stan rage!", 1500, false)
+
+            timer.after(1000, () => {
+                music.play(music.melodyPlayable(music.bigCrash), music.PlaybackMode.InBackground)
+                scene.cameraShake(16, 500)
+                status.value = 0
+                const loc = HaterHuntGame.mySprite.tilemapLocation()
+
+                if (!loc) {
+                    return
+                }
+
+                for (const pair of [
+                    [loc.col, loc.row - 1],
+                    [loc.col + 1, loc.row - 1],
+                    [loc.col + 1, loc.row],
+                    [loc.col + 1, loc.row + 1],
+                    [loc.col, loc.row + 1],
+                    [loc.col - 1, loc.row + 1],
+                    [loc.col - 1, loc.row],
+                    [loc.col - 1, loc.row - 1],
+                ]) {
+                    const tile = tiles.getTileLocation(pair[0], pair[1])
+
+                    if ([
+                        sprites.dungeon.chestClosed,
+                        sprites.dungeon.doorOpenNorth,
+                        sprites.dungeon.floorLight5,
+                        sprites.castle.tileDarkGrass3,
+                        assets.tile`nextCourseDoor`,
+                    ].indexOf(tile.getImage()) < 0) {
+                        tiles.setWallAt(tile, false)
+                        tiles.setTileAt(tile, HaterHuntGame.EMPTY_TILE)
+                    }
+                }
+            })
+        })
+    }
+
+    static touchGrass(sprite: Sprite, location: tiles.Location) {
+        const spriteLoc = HaterHuntGame.someGuy.tilemapLocation()
+        const spriteLocCode = spriteLoc.col * 1000 + spriteLoc.row
+        const locCode = location.col * 1000 + location.row
+
+        if (spriteLocCode === locCode) {
+            scene.cameraFollowSprite(null)
+            HaterHuntGame.knockAway(sprite, location, "FIND YOUR OWN GRASS, YOU FUDNUGGLER!")
+            return
+        }
+
+        scene.cameraFollowSprite(null)
+        game.showLongText("What!? GRASS!? GRASS!!!?", DialogLayout.Bottom)
+        game.showLongText("NOOOO! NOOOOO!! NOOOOOOOOO!!!", DialogLayout.Bottom)
+        game.showLongText("NOOOO! I CAN'T TOUCH GRAAAAAAAAAAAAAAAAAAAAAAA", DialogLayout.Bottom)
+        sprite.destroy(effects.disintegrate, 2000)
+        sprite.sayText("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
+        music.play(music.melodyPlayable(music.powerUp), music.PlaybackMode.InBackground)
+        effects.confetti.startScreenEffect()
+        info.stopCountdown()
+        scene.cameraShake(16, 1000000)
+    }
+
+    static haterHuntSplash(callback: () => void) {
+        tiles.setCurrentTilemap(tilemap`emptyLevel`)
+        scene.setBackgroundColor(0)
+        HaterHuntGame.destroyAllSprites()
+
+        timer.after(100, () => {
+            game.splash("Find the K-Pop hater!")
+            game.splash("Someone just", "insulted K-Pop!")
+            game.splash("Go tell him off!")
+            timer.after(100, callback)
+        })
+    }
+
+    static labyrinthSplash(callback: () => void) {
+        tiles.setCurrentTilemap(tilemap`emptyLevel`)
+        scene.setBackgroundColor(0)
+        HaterHuntGame.destroyAllSprites()
+
+        timer.after(100, () => {
+            music.play(music.createSong(assets.song`uhOh`), music.PlaybackMode.InBackground)
+            game.splash("The world cannot contain", "your rage")
+            game.splash("Reality is collapsing", "around you")
+            game.splash("You need to run")
+            timer.after(100, callback)
+        })
     }
 }
 
@@ -6987,6 +8978,37 @@ function enterHumbleHome(col: number = 10, row: number = 2) {
     sprite = sprites.create(assets.image`crtWithStandProfile`, SpriteKind.Neutral)
     tiles.placeOnTile(sprite, tiles.getTileLocation(14, 14))
 
+    sprite = sprites.create(img`
+        ........................
+        ........................
+        ........................
+        ........................
+        ..........fffff.........
+        ........ff11111f........
+        .......fb111111bf.......
+        ......fbd1111111f.......
+        ......fddd111111df......
+        ......fdddd11111df......
+        ......fddddddd11df......
+        ......fddddddd111f......
+        ......fddddddcf11f......
+        .......fbdddb1111bf.....
+        ........fffcfdb1b1f.....
+        .......ffffffffbfbf.....
+        ....ff.fffffffffff......
+        .....ffffffff...........
+        .....ffffffb1b1f........
+        ......ffffffbfbf........
+        ........................
+        ........................
+        ........................
+        ........................
+    `, SpriteKind.HaterHuntPlayer)
+    tiles.placeOnTile(sprite, tiles.getTileLocation(2, 14))
+
+    sprite = sprites.create(assets.image`crtWithStandProfile`, SpriteKind.Neutral)
+    tiles.placeOnTile(sprite, tiles.getTileLocation(5, 14))
+
     const powerup = sprites.create(assets.image`hater-ade`, SpriteKind.MagicGrease)
     tiles.placeOnTile(powerup, tiles.getTileLocation(1, 1))
     animation.runMovementAnimation(
@@ -7428,40 +9450,40 @@ scene.onOverlapTile(SpriteKind.Player, assets.tile`lovingHusband`, function (spr
     sayLongText("You missed dinner again.", assets.image`lovingHusband`)
     meSayLongText("I know.")
 
-    timer.after(1000, function () {
-        sayLongText("How's the bake sale going?", assets.image`lovingHusband`)
-        meSayLongText("We're close to finishing.")
-        meSayLongText("If we reach the end goal, they might make me the new Head of the Committee.")
-        sayLongText("How much?", assets.image`lovingHusband`)
-        meSayLongText(`$${TRUE_ENDING_GOAL}`)
-        sayLongText("And what was wrong with your old job?", assets.image`lovingHusband`)
-        sayLongText("Your family misses you.", assets.image`lovingHusband`)
-        sayLongText("I miss you.", assets.image`lovingHusband`)
-        sayLongText("Junior misses you.", assets.image`lovingHusband`)
-        meSayLongText("Please, I need you to trust me on this.")
-        meSayLongText("Please just trust me.")
-
-        timer.after(2000, function () {
+    time_sequence([
+        [1000, () => {
+            sayLongText("How's the bake sale going?", assets.image`lovingHusband`)
+            meSayLongText("We're close to finishing.")
+            meSayLongText("If we reach the end goal, they might make me the new Head of the Committee.")
+            sayLongText("How much?", assets.image`lovingHusband`)
+            meSayLongText(`$${TRUE_ENDING_GOAL}`)
+            sayLongText("And what was wrong with your old job?", assets.image`lovingHusband`)
+            sayLongText("Your family misses you.", assets.image`lovingHusband`)
+            sayLongText("I miss you.", assets.image`lovingHusband`)
+            sayLongText("Junior misses you.", assets.image`lovingHusband`)
+            meSayLongText("Please, I need you to trust me on this.")
+            meSayLongText("Please just trust me.")
+        }],
+        [2000, () => {
             sayLongText("Y'okay. :)", assets.image`lovingHusband`)
             meSayLongText("Really?")
             sayLongText("Yeah, of course.", assets.image`lovingHusband`)
+        }],
+        [3000, () => {
+            sayLongText("By the way, you have company.", assets.image`lovingHusband`)
+            meSayLongText("Wait, what?")
+            buttonsActive = true
+            setAnyShoppers(8, assets.tile`alternateGreyscaleDarker`)
+            sprite.sayText("AAAAAAH!!", 5000, false)
 
-            timer.after(3000, function () {
-                sayLongText("By the way, you have company.", assets.image`lovingHusband`)
-                meSayLongText("Wait, what?")
-                buttonsActive = true
-                setAnyShoppers(8, assets.tile`alternateGreyscaleDarker`)
-                sprite.sayText("AAAAAAH!!", 5000, false)
-
-                cauldron.sayText(Math.percentChance(15)
-                    ? "I stole this gag from the Carol Burnett Show."
-                    : "There's magic grease in the other room!",
-                    5000,
-                    false
-                )
-            })
-        })
-    })
+            cauldron.sayText(Math.percentChance(15)
+                ? "I stole this gag from the Carol Burnett Show."
+                : "There's magic grease in the other room!",
+                5000,
+                false
+            )
+        }],
+    ])
 })
 scene.onPathCompletion(SpriteKind.Neutral, function (sprite, location) {
     const madlib = madlibsHeadOfSales[headOfSalesDecision]
@@ -8045,15 +10067,68 @@ sprites.onDestroyed(SpriteKind.FakePlayer, function (sprite) {
     decoyExists = false
 })
 
-sprites.onOverlap(SpriteKind.Player, SpriteKind.JumpPlayer, function (sprite, otherSprite) {
+sprites.onOverlap(SpriteKind.Player, SpriteKind.HaterHuntPlayer, function (sprite, otherSprite) {
+    const loc = otherSprite.tilemapLocation()
+    const placeHere = tiles.getTileLocation(loc.col, loc.row - 1)
+    tiles.placeOnTile(sprite, placeHere)
+
     if (companionState < 2) {
+        sayLongText("Hi mom! I'm playing \"Find the K-Pop Hater\", a weird indie game.")
+        sayLongText("I don't think you'd like it.")
         return
     }
 
+    if (!game.ask("Want to play 'Find the K-Pop Hater'?")) {
+        return
+    }
+
+    voluntold.destroy()
+    pet.destroy()
+    resetSprites()
+
+    const exitMinigame = () => enterHumbleHome(placeHere.col, placeHere.row)
+
+    HaterHuntGame.start(
+        onAButtonPressed,
+        onBButtonPressed,
+        countdownEnd,
+        (w, s) => {
+            if (!w) {
+                exitMinigame()
+                return
+            }
+
+            ILikeBooksGame.start(
+                onAButtonPressed,
+                lifeZero,
+                (w: boolean) => {
+                    if (w) {
+                        companionType = Companion.KPOP_STAN
+                    }
+
+                    exitMinigame()
+
+                    if (w) {
+                        timer.after(100, () => {
+                            music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.InBackground)
+                            sayLongText("Your companion turned into a K-Pop Stan!")
+                        })
+                    }
+                }
+            )
+        },
+    )
+})
+sprites.onOverlap(SpriteKind.Player, SpriteKind.JumpPlayer, function (sprite, otherSprite) {
     const loc = otherSprite.tilemapLocation()
     const placeHere = tiles.getTileLocation(loc.col, loc.row - 1)
-
     tiles.placeOnTile(sprite, placeHere)
+
+    if (companionState < 2) {
+        sayLongText("Hi mom! I'm playing \"Jump the Shark\", a weird indie game.")
+        sayLongText("I don't think you'd like it.")
+        return
+    }
 
     if (!game.ask("Want to play 'Jump the Shark'?")) {
         return
@@ -10188,7 +12263,7 @@ let companionState: number = 0
 let fetchState: number = 0
 let minSpeed: number = 0
 let maxSpeed: number = 0
-let companionType: number = Companion.KPOP_STAN // todo
+let companionType: number = Companion.LUCKY_CAT
 
 face = sprites.create(assets.image`voluntoldBetterModel`, SpriteKind.Invulnerable)
 tiles.placeOnTile(face, tiles.getTileLocation(0, 0))
@@ -10497,7 +12572,7 @@ function drawingboard_2024_07_29() {
     hasKey = false
     hasConfectioneryMastery = true
     hasAshBlossom = true
-    forcedToEatStartingTile = 2
+    forcedToEatStartingTile = 0
     busCardsActive = true
     info.setScore(600000)
 
