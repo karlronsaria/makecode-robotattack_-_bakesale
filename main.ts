@@ -11990,15 +11990,15 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Trader, function (sprite, otherS
     skillNum = game.askForNumber("(1) Buy life. (2) Delegate. (3) Decoy. (Other to cancel.)", 1)
 
     switch (skillNum) {
-        case 1:
+        case Skill.BUY_EXTRA_LIFE:
             sayLongText("Press 'B' to buy an extra life.")
             music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.UntilDone)
             break
-        case 2:
+        case Skill.DELEGATE:
             sayLongText("Press 'B' to send out a delegate to sell for you.")
             music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.UntilDone)
             break
-        case 3:
+        case Skill.DECOY:
             sayLongText("Press 'B' to create a decoy.")
             music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.UntilDone)
             break
@@ -12212,6 +12212,7 @@ function countdownEnd() {
             break
     }
 }
+
 function lifeZero() {
     info.setScore(0)
     game.gameOver(false)
@@ -12558,6 +12559,7 @@ inventory = [
  13  name: `magicDmcaTakedownNotice`,
 */
 
+// todo a
 function drawingboard_2024_07_29() {
     recipe = {
         poisoned: true,
