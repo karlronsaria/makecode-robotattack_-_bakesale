@@ -102,6 +102,14 @@ namespace myTiles {
     export const tile49 = image.ofBuffer(hex``);
     //% fixedInstance jres blockIdentity=images._tile
     export const tile50 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile51 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile52 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile53 = image.ofBuffer(hex``);
+    //% fixedInstance jres blockIdentity=images._tile
+    export const tile54 = image.ofBuffer(hex``);
 
     helpers._registerFactory("tilemap", function(name: string) {
         switch(helpers.stringTrim(name)) {
@@ -1079,8 +1087,19 @@ namespace myTiles {
 2..................2...2
 222222222222222222222222
 `, [myTiles.transparency16,myTiles.tile40,sprites.builtin.forestTiles0,sprites.dungeon.doorOpenNorth,sprites.dungeon.darkGroundNorthWest0,sprites.dungeon.darkGroundWest,sprites.dungeon.darkGroundSouthWest0,sprites.swamp.swampTile16,sprites.dungeon.collectibleInsignia,sprites.dungeon.darkGroundNorth,sprites.dungeon.darkGroundCenter,sprites.dungeon.darkGroundSouth,sprites.dungeon.darkGroundNorthEast0,sprites.dungeon.darkGroundEast,sprites.dungeon.darkGroundSouthEast0,sprites.dungeon.chestClosed], TileScale.Sixteen);
+            case "healthyLiving01":
+            case "healthyLiving1":return tiles.createTilemap(hex`0a0008000204020502020202040203030303030303030303010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101`, img`
+2 2 2 2 2 2 2 2 2 2 
+. . . . 2 2 2 2 2 2 
+. . . . 2 . . . . . 
+. . . . 2 . . . . . 
+. . . . 2 . . . . . 
+. . . . 2 . . . . . 
+. . . . 2 . . . . . 
+. . . . 2 . . . . . 
+`, [myTiles.transparency16,myTiles.tile31,myTiles.tile51,myTiles.tile52,myTiles.tile53,myTiles.tile54], TileScale.Sixteen);
             case "haterHuntBottleSeller":
-            case "haterHuntBottleSeller1":return tiles.createTilemap(hex`1000100000000000000101010101000000000000000000000001000400010000000000000000000000010005000100000000000000000000000100000001000000000000000000000001000000010000000000000000000000010000000100000000000000000000000100000001000000000000000000000001000000010000000000000101010101010000000101010101010001020202020000000000000600020100010202000000000200000000000201000102020300000000000002020202010001020200000000000000000202020100010202020000020000020002020201000102020202000202000002020202010001010101010101010101010101010100`, img`
+            case "haterHuntBottleSeller1":return tiles.createTilemap(hex`1000100001010101010101010101010101010101010101010101000400010101010101010101010101010005000101010101010101010101010100000001010101010101010101010101000000010101010101010101010101010000000101010101010101010101010100000001010101010101010101010101000000010101010101010101010101010000000101010101010101020202020000000000000600020101010202000000000200000000000201010102020300000000000002020202010101020200000000000000000202020101010202020000020000020002020201010102020202000202000002020202010101010101010101010101010101010101`, img`
 . . . . . 2 2 2 2 2 . . . . . . 
 . . . . . 2 . . . 2 . . . . . . 
 . . . . . 2 . . . 2 . . . . . . 
@@ -1196,6 +1215,10 @@ namespace myTiles {
             case "tile49":return tile49;
             case "tileUtilobject2":
             case "tile50":return tile50;
+            case "tile51":return tile51;
+            case "tile52":return tile52;
+            case "tile53":return tile53;
+            case "tile54":return tile54;
         }
         return null;
     })
