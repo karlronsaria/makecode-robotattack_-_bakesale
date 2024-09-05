@@ -1156,55 +1156,6 @@ namespace HaterHuntGame {
             ])
         })
 
-        // // todo: remove
-        // timer.after(500, () => {
-        //     controller.moveSprite(mySprite, 0, 0)
-
-        //     timer.after(500, () => {
-        //         mySprite.sayText("!", 500, false)
-
-        //         timer.after(500, () => {
-        //             scene.cameraShake(16, 1000)
-        //             music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground)
-        //             music.play(music.melodyPlayable(music.bigCrash), music.PlaybackMode.InBackground)
-
-        //             for (let col = 16; col <= 22; ++col) {
-        //                 const tile = tiles.getTileLocation(col, 31)
-        //                 tiles.setTileAt(tile, sprites.dungeon.hazardLava1)
-        //                 tiles.setWallAt(tile, true)
-        //             }
-
-        //             timer.after(500, () => {
-        //                 mySprite.sayText("Uh oh.", 500, false)
-        //                 controller.moveSprite(mySprite, mySpeed, mySpeed)
-
-        //                 scene.onOverlapTile(Kind.Player, Asset.Image.EMPTY_TILE, function (sprite, location) {
-        //                     const currentLevel = info.score()
-
-        //                     timer.after(2000, function () {
-        //                         if (currentLevel !== info.score()) {
-        //                             return
-        //                         }
-
-        //                         tryCollapseGround(location)
-        //                     })
-        //                 })
-        //                 scene.onOverlapTile(Kind.Player, sprites.dungeon.collectibleInsignia, function (sprite, location) {
-        //                     const currentLevel = info.score()
-
-        //                     timer.after(2000, function () {
-        //                         if (currentLevel !== info.score()) {
-        //                             return
-        //                         }
-
-        //                         tryCollapseGround(location)
-        //                     })
-        //                 })
-        //             })
-        //         })
-        //     })
-        // })
-
         scene.onOverlapTile(Kind.Competitor, sprites.castle.tileDarkGrass3, (sprite, location) => {
             if (sprites.allOfKind(Kind.Player).length > 0) {
                 return
@@ -1221,30 +1172,11 @@ namespace HaterHuntGame {
             ])
         })
 
-        // // todo: remove
-        // timer.after(750, function () {
-        //     sprite.sayText("Ahh. Finally.", 1000, false)
-        //     timer.after(1500, function () {
-        //         music.play(music.melodyPlayable(music.smallCrash), music.PlaybackMode.InBackground)
-        //         sprite.destroy(effects.disintegrate, 1000)
-        //         rudeSign.destroy(effects.disintegrate, 1000)
-        //     })
-        //     timer.after(3000, nextCourse)
-        // })
-
         scene.onOverlapTile(Kind.Player, sprites.dungeon.doorOpenNorth, (sprite, location) => {
             if (doorSignal == 2) {
-                // // todo: remove
-                // if (info.score() === ZEN_POWERUP_LEVEL) {
-                //     tunnelPuzzle(sprite, location)
-                // }
-                // else {
-                //     tunnelRandom(sprite, location)
-                // }
-
                 (info.score() === ZEN_POWERUP_LEVEL
                     ? tunnelPuzzle
-                    : tunnelRandom)(sprite, location)
+                    : tunnelRandom)(sprite, location);
 
                 doorSignal = 0
                 return

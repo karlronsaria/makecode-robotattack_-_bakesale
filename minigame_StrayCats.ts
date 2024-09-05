@@ -361,7 +361,7 @@ namespace StrayCatsGame {
                 sprite.follow(melissa, 100)
             }
         })
-        controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
+        controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
             if (info.score() > 0) {
                 const sprite = sprites.create(img`
                 e e e . . . . e e e . . . . 

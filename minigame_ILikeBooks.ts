@@ -232,10 +232,10 @@ namespace ILikeBooksGame {
             200,
             false,
         )
-        timer.after(1000, function () {
+        timer.after(1000, () =>
             startFreakout()
-        })
-        timer.after(2000, function () {
+        )
+        timer.after(2000, () => {
             sprites.destroy(missile, effects.ashes, 500)
             music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground)
             music.play(music.melodyPlayable(music.bigCrash), music.PlaybackMode.InBackground)
@@ -244,7 +244,7 @@ namespace ILikeBooksGame {
     }
 
     function newEnemy() {
-        const myEnemy = sprites.create(img`
+        const sprite = sprites.create(img`
             ........................
             ........................
             ........................
@@ -270,8 +270,8 @@ namespace ILikeBooksGame {
             ........................
             ........................
             `, Kind.Enemy)
-        tiles.placeOnTile(myEnemy, tiles.getTileLocation(randint(6, 9), randint(3, 7)))
-        myEnemy.setStayInScreen(true)
+        tiles.placeOnTile(sprite, tiles.getTileLocation(randint(6, 9), randint(3, 7)))
+        sprite.setStayInScreen(true)
     }
 
     function startFreakout() {
@@ -280,20 +280,27 @@ namespace ILikeBooksGame {
         for (const value of sprites.allOfKind(Kind.Enemy)) {
             value.setVelocity(randint(75, 100), nonZeroRand(100))
             value.sayText("AAAAAH!", 500, false)
-            timer.after(1000, function () {
+            timer.after(1000, () =>
                 value.setVelocity(0, 0)
-            })
+            )
         }
-        timer.after(2000, function () {
-            sprites.allOfKind(Kind.Enemy)._pickRandom().sayText([
-                "ARE YOU                    INSANE!?",
-                "WHAT                       IS WRONG                      WITH YOU!?",
-                "THIS                       IS NUTS!",
-                "I DON'T                    WANT TO                       DIE!"
-            ]._pickRandom(), 2000, false)
+        timer.after(2000, () => {
+            sprites
+                .allOfKind(Kind.Enemy)
+                ._pickRandom()
+                .sayText(
+                    [
+                        "ARE YOU                    INSANE!?",
+                        "WHAT                       IS WRONG                      WITH YOU!?",
+                        "THIS                       IS NUTS!",
+                        "I DON'T                    WANT TO                       DIE!"
+                    ]
+                    ._pickRandom(),
+                    2000, false,
+                )
         })
         if (freakouts >= 3) {
-            timer.after(3000, function () {
+            timer.after(3000, () => {
                 game.showLongText("Stop!", DialogLayout.Bottom)
                 game.showLongText("Okay. You like books. Haha. Umm.", DialogLayout.Bottom)
                 game.showLongText("Lesson over.", DialogLayout.Bottom)
@@ -375,9 +382,9 @@ namespace ILikeBooksGame {
                                 nonZeroRand(35),
                             )
 
-                            timer.after(1000, function () {
+                            timer.after(1000, () =>
                                 value.setVelocity(0, 0)
-                            })
+                            )
                         }
                     }
                 },
@@ -515,7 +522,7 @@ namespace ILikeBooksGame {
 
         intervals = startIntervals()
 
-        controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
+        controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
             const temp: StatusBarSprite =
                 statusbars.getStatusBarAttachedTo(
                     StatusBarKind.Magic,
@@ -529,7 +536,7 @@ namespace ILikeBooksGame {
 
         info.onLifeZero(() => stop(false))
 
-        sprites.onOverlap(Kind.Player, Kind.Projectile, function (sprite, otherSprite) {
+        sprites.onOverlap(Kind.Player, Kind.Projectile, (sprite, otherSprite) => {
             sprites.destroy(otherSprite, effects.smiles, 200)
             info.changeLifeBy(-1)
             music.play(music.melodyPlayable(music.thump), music.PlaybackMode.InBackground)
