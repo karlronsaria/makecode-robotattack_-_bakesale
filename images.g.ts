@@ -5591,6 +5591,25 @@ f f f f f f f f f f f f f f f .
 . . . . . . . . . . . . . . . . 
 . . . . . . . . . . . . . . . . 
 `;
+            case "image176":
+            case "strayCatsManager":return img`
+. . . . f f f f . . . . 
+. . f f e e e e f f . . 
+. f f e e e e e e f f . 
+f f f f 4 e e e f f f f 
+f f f 4 4 4 e e f f f f 
+f f f 4 4 4 4 e e f f f 
+f f e f f 4 4 f f e f f 
+f 4 f 1 1 f f 1 1 f 4 f 
+f e 4 f f d d f f 4 e f 
+. f e d d b b d d e f . 
+. f f e 4 4 4 4 e f f . 
+e 4 f 6 5 5 6 6 6 f 4 e 
+4 8 f 8 8 8 8 8 8 f 8 4 
+4 4 f 6 6 6 6 6 6 f 4 4 
+. . . f f f f f f . . . 
+. . . f f . . f f . . . 
+`;
         }
         return null;
     })

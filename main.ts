@@ -69,6 +69,7 @@ namespace SpriteKind {
     export const RecipeCard = SpriteKind.create()
     export const JumpPlayer = SpriteKind.create()
     export const HaterHuntPlayer = SpriteKind.create()
+    export const StrayCatsPlayer = SpriteKind.create()
 
     export const _LENGTH = SpriteKind.create()
 }
@@ -263,6 +264,8 @@ let recipe: recipe_t = {
 //       - What starting tile?
 //       - The tile. The one you started on. That tile.
 // issue
+// - [x] 2024_09_04_011218
+//   - actual: StrayCatsGame lags and spawns too many enemies on the second play
 // - [x] 2024_08_23_010728
 //   - actual: rage and completion endings conflict
 // - [x] 2024_08_21_183202
@@ -4121,7 +4124,7 @@ function enterHomeOfBox() {
         tiles.placeOnTile(orb, tiles.getTileLocation(3, 6))
     }
 
-    if (companionState != 2 || busCardsActive) {
+    if (companionState !== 2 || busCardsActive) {
         setAnyShoppers(5, assets.tile`alternateGreyscale`)
     }
 
@@ -4163,7 +4166,7 @@ function enterHumbleHome(col: number = 10, row: number = 2) {
         ........................
         ........................
         ........................
-    `, SpriteKind.Neutral)
+    `, SpriteKind.StrayCatsPlayer)
     tiles.placeOnTile(sprite, tiles.getTileLocation(7, 14))
 
     sprite = sprites.create(assets.image`crtWithStandProfile`, SpriteKind.Neutral)
@@ -4817,7 +4820,7 @@ scene.onOverlapTile(SpriteKind.MagicGrease, sprites.dungeon.doorOpenNorth, funct
 let mutex: boolean = false
 
 scene.onOverlapTile(SpriteKind.Player, assets.tile`greenRug1`, function (sprite, location) {
-    if (mutex) {
+    if (mutex || companionState === 2) {
         return
     }
 
@@ -5460,6 +5463,43 @@ sprites.onDestroyed(SpriteKind.FakePlayer, function (sprite) {
     decoyExists = false
 })
 
+sprites.onOverlap(SpriteKind.Player, SpriteKind.StrayCatsPlayer, function (sprite, otherSprite) {
+    if (companionState < 2) {
+        return
+    }
+
+    const loc = otherSprite.tilemapLocation()
+    const placeHere = tiles.getTileLocation(loc.col, loc.row - 1)
+    tiles.placeOnTile(sprite, placeHere)
+
+    if (!game.ask("Want to play 'Stray Cats'?")) {
+        return
+    }
+
+    voluntold.destroy()
+    pet.destroy()
+    resetSprites()
+
+    StrayCatsGame.start(
+        onAButtonPressed,
+        onBButtonPressed,
+        lifeZero,
+        (w, s, h) => {
+            if (w) {
+                companionType = Companion.LUCKY_CAT
+            }
+
+            enterHumbleHome(placeHere.col, placeHere.row)
+
+            if (w) {
+                timer.after(100, () => {
+                    music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.InBackground)
+                    sayLongText("Your companion turned into Lucky Cat!")
+                })
+            }
+        },
+    )
+})
 sprites.onOverlap(SpriteKind.Player, SpriteKind.HaterHuntPlayer, function (sprite, otherSprite) {
     const loc = otherSprite.tilemapLocation()
     const placeHere = tiles.getTileLocation(loc.col, loc.row - 1)
@@ -7809,28 +7849,6 @@ game.onUpdateInterval(5000, function () {
         }
     })
 })
-function followPath(
-    sprite: Sprite,
-    location: tiles.Location,
-    speed: number,
-) {
-    let path = scene.aStar(
-        sprite.tilemapLocation(),
-        location,
-    )
-
-    if (!path) {
-        return
-    }
-
-    path.removeAt(0)
-
-    if (path.length === 0) {
-        return
-    }
-
-    scene._followPath(sprite, path, speed)
-}
 game.onUpdateInterval(1000, function () {
     for (const value of sprites.allOfKind(SpriteKind.Enemy)) {
         if (enraged) {
@@ -7847,7 +7865,7 @@ game.onUpdateInterval(1000, function () {
             continue
         }
 
-        followPath(
+        my.followPath(
             value,
             (decoyExists ? decoy : voluntold).tilemapLocation(),
             (randint(minSpeed, maxSpeed)
@@ -7860,7 +7878,7 @@ game.onUpdateInterval(1000, function () {
     }
 
     for (const value of sprites.allOfKind(SpriteKind.BeetrootEnjoyer)) {
-        followPath(
+        my.followPath(
             value,
             voluntold.tilemapLocation(),
             +enemiesCanMove * 0.85 * moveSpeed,

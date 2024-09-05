@@ -884,6 +884,11 @@
         "mimeType": "image/x-mkcd-f4",
         "displayName": "sanneBack"
     },
+    "image176": {
+        "data": "hwQMABAAAAAA8P//D+BEAAD//0/+T0gA8P///uT//wDw/kQf325o/+9ORB/fVGj/7+5E9L1UaA/v7k70vWRoD+/u7h/fZGj/8P7vH99uaP/w///+5P//AAD//0/+T0gAAPD//w/gRAA=",
+        "mimeType": "image/x-mkcd-f4",
+        "displayName": "strayCatsManager"
+    },
     "anim1": {
         "namespace": "myAnimations",
         "id": "anim1",

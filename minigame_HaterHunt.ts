@@ -441,7 +441,7 @@ namespace HaterHuntGame {
         }
 
         if (haterHuntTilemaps.length > 0) {
-            startCourseHaterHunt(haterHuntTilemaps.pop())
+            startCourseHaterHunt(haterHuntTilemaps.shift())
             return
         }
 
@@ -465,7 +465,7 @@ namespace HaterHuntGame {
             return
         }
 
-        setCourse(tilemaps.pop(), info.score() === 0)
+        setCourse(tilemaps.shift(), info.score() === 0)
 
         if (tilemaps.length > 0) {
             for (const tile of tiles.getTilesByType(sprites.castle.tileDarkGrass3)) {
@@ -1329,9 +1329,9 @@ namespace HaterHuntGame {
         ]
 
         haterHuntTilemaps = [
-            tilemap`haterHunt03`,
-            tilemap`haterHunt02`,
             tilemap`haterHunt01`,
+            tilemap`haterHunt02`,
+            tilemap`haterHunt03`,
         ]
 
         tilemaps.sort((a, b) => randint(-1, 1))

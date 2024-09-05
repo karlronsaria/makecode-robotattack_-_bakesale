@@ -15,7 +15,7 @@ namespace ParticleSprite {
     export let lifespan: number = 7000
     export let slowFactor: number = 10
 
-    export function squareDistance(x: number, y: number) {
+    export function squareDistance(x: number, y: number): number {
         return x * x + y * y
     }
 

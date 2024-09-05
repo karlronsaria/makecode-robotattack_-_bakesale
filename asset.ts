@@ -63,6 +63,9 @@ export namespace Jump {
     export const MAGIC_AXE = assets.image`magicAxe`
     export const PLAYER = assets.image`yellowHatTrimmed`
 }
+export namespace StrayCats {
+    export const MANAGER = assets.image`strayCatsManager`
+}
 export namespace ToddHoward {
     export const BG_SITTING_ACROSS = assets.image`toddHowardSittingAcross`
     export const BG_JUMPSCARE = assets.image`toddHowardJumpscare`
