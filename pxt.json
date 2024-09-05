@@ -17,7 +17,18 @@
         "tilemap.g.jres",
         "tilemap.g.ts",
         "images.g.jres",
-        "images.g.ts"
+        "images.g.ts",
+        "minigame_ILikeBooks.ts",
+        "asset.ts",
+        "minigame_HaterHunt.ts",
+        "after.ts",
+        "minigame_Jump.ts",
+        "minigame_Kitchen.ts",
+        "satellite_sprite.ts",
+        "particle_sprite.ts",
+        "cutscene_LagPolice.ts",
+        "my_FollowPath.ts",
+        "minigame_StrayCats.ts"
     ],
     "testFiles": [
         "test.ts"
