@@ -560,7 +560,7 @@ namespace JumpGame {
         for (let i = 20; i <= 60; i += 8) {
             tiles.placeOnTile(
                 newPlot(false),
-                tiles.getTileLocation(i, 7)
+                tiles.getTileLocation(i, 7),
             )
         }
 

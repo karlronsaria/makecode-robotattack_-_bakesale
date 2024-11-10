@@ -23,11 +23,14 @@ namespace ILikeBooksGame {
         return num * (2 * randint(0, 1) - 1)
     }
 
-    function intro() {
-        game.splash("Lesson Time!", "Healty Living")
-        game.splash("Internet chungoids", "have entered the domicile")
-        game.splash("Press 'A'")
-        game.splash("And tell them to", "read a book!")
+    function intro(callback: () => void) {
+        timer.after(100, () => {
+            game.splash("Lesson Time!", "Healthy Living")
+            game.splash("Internet chungoids", "have entered the domicile")
+            game.splash("Press 'A'")
+            game.splash("And tell them to", "read a book!")
+            timer.after(100, callback)
+        })
     }
 
     function furnishHouse() {
@@ -232,10 +235,10 @@ namespace ILikeBooksGame {
             200,
             false,
         )
-        timer.after(1000, function () {
+        timer.after(1000, () =>
             startFreakout()
-        })
-        timer.after(2000, function () {
+        )
+        timer.after(2000, () => {
             sprites.destroy(missile, effects.ashes, 500)
             music.play(music.melodyPlayable(music.zapped), music.PlaybackMode.InBackground)
             music.play(music.melodyPlayable(music.bigCrash), music.PlaybackMode.InBackground)
@@ -244,7 +247,7 @@ namespace ILikeBooksGame {
     }
 
     function newEnemy() {
-        const myEnemy = sprites.create(img`
+        const sprite = sprites.create(img`
             ........................
             ........................
             ........................
@@ -270,8 +273,8 @@ namespace ILikeBooksGame {
             ........................
             ........................
             `, Kind.Enemy)
-        tiles.placeOnTile(myEnemy, tiles.getTileLocation(randint(6, 9), randint(3, 7)))
-        myEnemy.setStayInScreen(true)
+        tiles.placeOnTile(sprite, tiles.getTileLocation(randint(6, 9), randint(3, 7)))
+        sprite.setStayInScreen(true)
     }
 
     function startFreakout() {
@@ -280,20 +283,27 @@ namespace ILikeBooksGame {
         for (const value of sprites.allOfKind(Kind.Enemy)) {
             value.setVelocity(randint(75, 100), nonZeroRand(100))
             value.sayText("AAAAAH!", 500, false)
-            timer.after(1000, function () {
+            timer.after(1000, () =>
                 value.setVelocity(0, 0)
-            })
+            )
         }
-        timer.after(2000, function () {
-            sprites.allOfKind(Kind.Enemy)._pickRandom().sayText([
-                "ARE YOU                    INSANE!?",
-                "WHAT                       IS WRONG                      WITH YOU!?",
-                "THIS                       IS NUTS!",
-                "I DON'T                    WANT TO                       DIE!"
-            ]._pickRandom(), 2000, false)
+        timer.after(2000, () => {
+            sprites
+                .allOfKind(Kind.Enemy)
+                ._pickRandom()
+                .sayText(
+                    [
+                        "ARE YOU                    INSANE!?",
+                        "WHAT                       IS WRONG                      WITH YOU!?",
+                        "THIS                       IS NUTS!",
+                        "I DON'T                    WANT TO                       DIE!"
+                    ]
+                    ._pickRandom(),
+                    2000, false,
+                )
         })
         if (freakouts >= 3) {
-            timer.after(3000, function () {
+            timer.after(3000, () => {
                 game.showLongText("Stop!", DialogLayout.Bottom)
                 game.showLongText("Okay. You like books. Haha. Umm.", DialogLayout.Bottom)
                 game.showLongText("Lesson over.", DialogLayout.Bottom)
@@ -375,9 +385,9 @@ namespace ILikeBooksGame {
                                 nonZeroRand(35),
                             )
 
-                            timer.after(1000, function () {
+                            timer.after(1000, () =>
                                 value.setVelocity(0, 0)
-                            })
+                            )
                         }
                     }
                 },
@@ -501,38 +511,45 @@ namespace ILikeBooksGame {
         _onLifeZero = onLifeZero
         _callback = callback
 
+        init()
         scene.setBackgroundColor(0)
         tiles.setCurrentTilemap(Asset.Tilemap.EMPTY_LEVEL)
-        intro()
-        info.setLife(10)
-        tiles.setCurrentTilemap(Asset.Tilemap.HEALTHY_LIVING_01)
-        mySprite = newPlayer()
-        furnishHouse()
 
-        for (let index = 0; index < NUM_ENEMIES; index++) {
-            newEnemy()
-        }
+        intro(() => {
+            info.setLife(10)
+            tiles.setCurrentTilemap(Asset.Tilemap.HEALTHY_LIVING_01)
 
-        intervals = startIntervals()
+            // (karlr 11-09: fix issue 2024_11_06_175811: I needed to reset the camera)
+            scene.centerCameraAt(0, 0)
+            
+            mySprite = newPlayer()
+            furnishHouse()
 
-        controller.A.onEvent(ControllerButtonEvent.Pressed, function () {
-            const temp: StatusBarSprite =
-                statusbars.getStatusBarAttachedTo(
-                    StatusBarKind.Magic,
-                    mySprite,
-                )
-
-            if (temp.value == temp.max) {
-                throwMissile(mySprite)
+            for (let index = 0; index < NUM_ENEMIES; index++) {
+                newEnemy()
             }
-        })
 
-        info.onLifeZero(() => stop(false))
+            intervals = startIntervals()
 
-        sprites.onOverlap(Kind.Player, Kind.Projectile, function (sprite, otherSprite) {
-            sprites.destroy(otherSprite, effects.smiles, 200)
-            info.changeLifeBy(-1)
-            music.play(music.melodyPlayable(music.thump), music.PlaybackMode.InBackground)
+            controller.A.onEvent(ControllerButtonEvent.Pressed, () => {
+                const temp: StatusBarSprite =
+                    statusbars.getStatusBarAttachedTo(
+                        StatusBarKind.Magic,
+                        mySprite,
+                    )
+
+                if (temp.value == temp.max) {
+                    throwMissile(mySprite)
+                }
+            })
+
+            info.onLifeZero(() => stop(false))
+
+            sprites.onOverlap(Kind.Player, Kind.Projectile, (sprite, otherSprite) => {
+                sprites.destroy(otherSprite, effects.smiles, 200)
+                info.changeLifeBy(-1)
+                music.play(music.melodyPlayable(music.thump), music.PlaybackMode.InBackground)
+            })
         })
     }
 }

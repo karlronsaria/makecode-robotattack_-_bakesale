@@ -21,4 +21,14 @@ namespace my {
 
         scene._followPath(sprite, path, speed)
     }
+
+    export function plus(
+        vec1: tiles.Location,
+        vec2: number[],
+    ): tiles.Location {
+        return tiles.getTileLocation(
+            vec1.col + vec2[0],
+            vec1.row + vec2[1],
+        )
+    }
 }

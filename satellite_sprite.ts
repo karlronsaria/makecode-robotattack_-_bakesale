@@ -18,9 +18,9 @@ namespace SatelliteSprite {
             construct,
             radius,
             nextAngle
-            % (max + 1)
-            * 2
-            / max,
+                % (max + 1)
+                * 2
+                / max,
             interval,
             delta,
             speed,
@@ -51,7 +51,7 @@ namespace SatelliteSprite {
         satellite.setFlag(SpriteFlag.GhostThroughSprites, true)
         satellite.setFlag(SpriteFlag.GhostThroughWalls, true)
 
-        timer.after(interval, function () {
+        timer.after(interval, () => {
             satellite.setFlag(SpriteFlag.Invisible, false)
             satellite.setFlag(SpriteFlag.GhostThroughSprites, false)
         })
