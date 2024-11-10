@@ -1,5 +1,7 @@
 namespace HaterHuntGame {
+    // todo: not used, consider removing
     const HATER_HUNT_LEVEL: number = 1
+
     const CONFRONT_SELLER_LEVEL: number = 4
     const ZEN_POWERUP_LEVEL: number = 5
     const STEADFAST_POWERUP_LEVEL: number = 6
@@ -1277,7 +1279,7 @@ namespace HaterHuntGame {
     }
 
     function rageTremor() {
-        if (!mySprite) {
+        if (!mySprite || zen) {
             return
         }
 

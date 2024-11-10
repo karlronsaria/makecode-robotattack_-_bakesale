@@ -265,6 +265,8 @@ let recipe: recipe_t = {
 //       - What starting tile?
 //       - The tile. The one you started on. That tile.
 // issue
+// - [x] 2024_11_06_175811
+//   - actual: ILikeBooksGame minigame no background, player spawns in wrong column
 // - [x] 2024_09_04_011218
 //   - actual: StrayCatsGame lags and spawns too many enemies on the second play
 // - [x] 2024_08_23_010728
@@ -2516,12 +2518,27 @@ function trySetPet() {
     //   - <https://www.freepik.com/premium-vector/pixel-art-king-crown-icon-bit-game_11812813.htm>
     // - retrieved: 2024_08_23
 
+    if (!voluntold) {
+        return
+    }
+
     pet = newCompanionSprite()
+
+    if (!pet) {
+        return
+    }
+
+    const loc = voluntold.tilemapLocation()
+
+    if (!loc) {
+        return
+    }
+
     pet.setFlag(SpriteFlag.GhostThroughTiles, true)
     pet.setFlag(SpriteFlag.GhostThroughWalls, true)
     tiles.placeOnTile(
         pet,
-        plus(voluntold.tilemapLocation(), [
+        my.plus(loc, [
             (randint(0, 1) * 2 - 1),
             (randint(0, 1) * 2 - 1),
         ]),
@@ -2659,7 +2676,7 @@ function newExit(col: number, row: number) {
 
         tiles.placeOnTile(
             sprite,
-            plus(otherSprite.tilemapLocation(), [-2, 0]),
+            my.plus(otherSprite.tilemapLocation(), [-2, 0]),
         )
     })
 }
@@ -5432,7 +5449,7 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.StrayCatsPlayer, function (sprit
         return
     }
 
-    const placeHere = plus(otherSprite.tilemapLocation(), [0, -1])
+    const placeHere = my.plus(otherSprite.tilemapLocation(), [0, -1])
     tiles.placeOnTile(sprite, placeHere)
 
     if (!game.ask("Want to play 'Stray Cats'?")) {
@@ -5464,7 +5481,7 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.StrayCatsPlayer, function (sprit
     )
 })
 sprites.onOverlap(SpriteKind.Player, SpriteKind.HaterHuntPlayer, function (sprite, otherSprite) {
-    const placeHere = plus(otherSprite.tilemapLocation(), [0, -1])
+    const placeHere = my.plus(otherSprite.tilemapLocation(), [0, -1])
     tiles.placeOnTile(sprite, placeHere)
 
     if (companionState < 2) {
@@ -5493,29 +5510,32 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.HaterHuntPlayer, function (sprit
                 return
             }
 
-            ILikeBooksGame.start(
-                onAButtonPressed,
-                lifeZero,
-                (w: boolean) => {
-                    if (w) {
-                        companionType = Companion.KPOP_STAN
-                    }
+            // todo
+            timer.after(150, () => {
+                ILikeBooksGame.start(
+                    onAButtonPressed,
+                    lifeZero,
+                    (w: boolean) => {
+                        if (w) {
+                            companionType = Companion.KPOP_STAN
+                        }
 
-                    exitMinigame()
+                        exitMinigame()
 
-                    if (w) {
-                        timer.after(100, () => {
-                            music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.InBackground)
-                            sayLongText("Your companion turned into a K-Pop Stan!")
-                        })
+                        if (w) {
+                            timer.after(100, () => {
+                                music.play(music.melodyPlayable(music.beamUp), music.PlaybackMode.InBackground)
+                                sayLongText("Your companion turned into a K-Pop Stan!")
+                            })
+                        }
                     }
-                }
-            )
+                )
+            })
         },
     )
 })
 sprites.onOverlap(SpriteKind.Player, SpriteKind.JumpPlayer, function (sprite, otherSprite) {
-    const placeHere = plus(otherSprite.tilemapLocation(), [0, -1])
+    const placeHere = my.plus(otherSprite.tilemapLocation(), [0, -1])
     tiles.placeOnTile(sprite, placeHere)
 
     if (companionState < 2) {
@@ -6047,7 +6067,7 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.ForbiddenPotable, function (spri
         : consumeHaterade)(otherSprite);
 })
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Professional, function (sprite, otherSprite) {
-    const placeMeHere = plus(otherSprite.tilemapLocation(), [0, 2])
+    const placeMeHere = my.plus(otherSprite.tilemapLocation(), [0, 2])
 
     if (hasConfectioneryMastery) {
         sayLongText("Go quickly. You're being followed.", assets.image`witchGhost`)
@@ -7201,7 +7221,7 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Employer, function (sprite, othe
     
     tiles.placeOnTile(
         sprite,
-        plus(otherSprite.tilemapLocation(), [1, 0]),
+        my.plus(otherSprite.tilemapLocation(), [1, 0]),
     )
 
     if (hasBlueEyes) {
@@ -7275,7 +7295,7 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Employer, function (sprite, othe
 sprites.onOverlap(SpriteKind.Player, SpriteKind.Trader, function (sprite, otherSprite) {
     tiles.placeOnTile(
         sprite,
-        plus(otherSprite.tilemapLocation(), [-1, 0]),
+        my.plus(otherSprite.tilemapLocation(), [-1, 0]),
     )
 
     if (enraged) {
@@ -7498,7 +7518,7 @@ function countdownEnd() {
 
             tiles.placeOnTile(
                 killerTemp,
-                plus(voluntold.tilemapLocation(), [-5, 0]),
+                my.plus(voluntold.tilemapLocation(), [-5, 0]),
             )
 
             killerTemp.vx = 15
